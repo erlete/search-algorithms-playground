@@ -146,15 +146,13 @@ class Maze:
                 (coordinates[0] + 1, coordinates[1]),   # Bottom
                 (coordinates[0], coordinates[1] - 1)    # Left
                 ]:
-            self.loops += 1
             surrounding_nodes.append(node)
 
         # Generates an order array
         order = []
         while True: # The infinite loop is necessary in order to provide with unique, random index appending to the 'order' array
             value = randint(0, len(surrounding_nodes) - 1)
-            self.loops += 1
-            self.uniqueappend(value, order) # If a value is repeated, self.loops does not get appended
+            self.uniqueappend(value, order) # If a value is repeated, it does not get appended
             if len(order) == len(surrounding_nodes):
                 break
 
@@ -162,7 +160,6 @@ class Maze:
         output = []
         for value in order:
             self.uniqueappend(surrounding_nodes[value], output)
-            self.loops += 1
         return output
 
     def surroundings(self, coordinates):
@@ -190,7 +187,6 @@ class Maze:
             (coordinates[0], coordinates[1] - 1)       # Middle left
             ]:
             surrounding_nodes.append(node)
-            self.loops += 1
         return surrounding_nodes
 
     def caesar(self, paths):
@@ -221,7 +217,6 @@ class Maze:
 
         # Checks every path node's distance to origin to determine which one is the farthest one
         for node in nodes_changed:
-            self.loops += 1
             if (self.Initial_position[0] + node[0], self.Initial_position[1] + node[1]) >= higher_distance:
                 higher_distance = (self.Initial_position[0] + node[0], self.Initial_position[1] + node[1])
 
@@ -245,7 +240,6 @@ class Maze:
             # Checks for nodes around the specified one that are not "walls" (-1), "path tiles" (1) or the initial node ('A')
             for coordinates in self.Frontier:
                 for neighbor in self.nextnodes(coordinates):
-                    self.loops += 1
                     if self.Base[neighbor[0]][neighbor[1]] not in [-1, 1, 'A']:
                         self.uniqueappend(neighbor, candidates) # Appends the valid nodes to the 'candidates' list
             
@@ -254,7 +248,6 @@ class Maze:
                 can_make_path = True
                 nearby_path_tiles = 0
                 for coordinates in self.surroundings(candidate):
-                    self.loops += 1
                     if self.Base[coordinates[0]][coordinates[1]] in [1, 'A']:
                         nearby_path_tiles += 1
                         if nearby_path_tiles == 3:
@@ -275,7 +268,6 @@ class Maze:
                 return 1
             else: # If the generation process has not yet finished (there are avaliable nodes for path-making)
                 for coordinates in selected_nodes:
-                    self.loops += 1
                     self.Base[coordinates[0]][coordinates[1]] = 1       # Sets the selected nodes as path tiles (1)
                     self.uniqueappend(coordinates, self.Frontier)       # Appends the nodes to the 'Frontier' array
 
@@ -290,8 +282,6 @@ class Maze:
         self.display()
 
 maze = Maze()
-maze.loops = 0
 maze.basegenerator((60, 60))
 maze.pathgenerator()
 maze.display()
-print(maze.loops)
