@@ -103,13 +103,13 @@ class Maze:
             for value in dimensions:
                 if value <= 0:
                     raise Exception("Negative values cannot be used to set the array dimensions.")
-                elif value > 2:
-                    raise Exception("The array can only be bidimensional.")
+        elif type(dimensions) == tuple and len(dimensions) != 2:
+            raise Exception("The array can only be bidimensional.")
         else:
             raise Exception("The array dimensions must be specified either as an 'int' or two-term 'tuple'.")
 
         # Base generation
-        self.Base = [[0 for i in range(dimensions[0] + 2)] for j in range(dimensions[1] + 2)] # Base generation (0)
+        self.Base = [[0 for i in range(dimensions[1] + 2)] for j in range(dimensions[0] + 2)] # Base generation (0)
 
         self.Base[0] = [-1 for i in range(len(self.Base[0]))]   # Top outer wall (-1)
         self.Base[-1] = self.Base[0].copy()                     # Bottom outer wall (-1)
@@ -159,7 +159,6 @@ class Maze:
         output = []
         for value in order:
             self.uniqueappend(surrounding_nodes[value], output)
-
         return output
 
     def surroundings(self, coordinates):
@@ -187,30 +186,23 @@ class Maze:
             (coordinates[0], coordinates[1] - 1)       # Middle left
             ]:
             surrounding_nodes.append(node)
-
         return surrounding_nodes
 
-    def caesar(self, paths, spread_index):
+    def caesar(self, paths):
         """
         Random path divergence generator. Takes one or multiple path divergence possibilities and selects at least one of them.
-
-        The 'spread_index' sets the probability of path selection ( = 0: all possible paths are selected; = 10: all possible paths are skipped).
-        Note that values near 10 might generate an endless loop. Also, negative values act the same way as zero.
 
         The name is due to the 'lives, dies' choice of Julius Caesar during colosseum gladiator games.
         """
         # Error Prevention:
         if len(paths) == 0:
-            return None
-        elif spread_index >= 10:
-            raise Exception("Values over 10 for 'spread_index' generate an endless loop.")
-
+            return []
         else:
             selected = []
             while True:
                 for element in paths:
                     selection_value = randint(0, 10)
-                    if selection_value >= spread_index:
+                    if selection_value >= 5:
                         selected.append(element)
                 if len(selected) >= 1:
                     return selected
@@ -231,65 +223,57 @@ class Maze:
 
     # Path generation method
 
-    def pathgenerator(self, iterations = 200, spread_index = 3):
+    def pathgenerator(self):
         """
         Randomly generates a pathway for the array.
 
         The 'iterations' parameter determines after how many path node generation attemps the algorithm should stop. For low values, the path might have a short length.
         """
-        self.Frontier = []
-        self.Nodes_in_range = []
-        self.Coordinates = [self.Initial_position]
-        self.Nodes_changed = self.Coordinates.copy()
+        self.Frontier = [self.Initial_position]
+        self.Explored_nodes = self.Frontier.copy()
 
-        for iteration_count in range(iterations):
-            for coordinate in self.Coordinates:
-                for candidate_in_range in self.nextnodes(coordinate):
-                    if self.Base[candidate_in_range[0]][candidate_in_range[1]] in [-1, 'A', 1]:
-                        continue
-                    elif self.Base[candidate_in_range[0]][candidate_in_range[1]] == 'B':
-                        keep = False
-                    self.uniqueappend(candidate_in_range, self.Nodes_in_range)
+        while True:
+            selected_nodes, candidates = [], []
+            # Checks for nodes around the specified one that are not "walls" (-1), "path tiles" (1) or the initial node ('A')
+            for coordinates in self.Frontier:
+                for neighbor in self.nextnodes(coordinates):
+                    if self.Base[neighbor[0]][neighbor[1]] not in [-1, 1, 'A']:
+                        self.uniqueappend(neighbor, candidates) # Appends the selected nodes to the candidates list
 
-            for candidate in self.Nodes_in_range:
+            for candidate in candidates:
                 can_make_path = True
-                nearby_path = 0
-                for check in self.surroundings(candidate):
-                    if self.Base[check[0]][check[1]] in [1, 'A']:
-                        nearby_path += 1
-
-                        if nearby_path == 3:
+                nearby_path_tiles = 0
+                for coordinates in self.surroundings(candidate):
+                    if self.Base[coordinates[0]][coordinates[1]] in [1, 'A']:
+                        nearby_path_tiles += 1
+                        if nearby_path_tiles == 3:
                             can_make_path = False
-
+                            break
                 if can_make_path == True:
-                    self.Frontier.append(candidate)
+                    selected_nodes.append(candidate)
 
-            self.Frontier = self.caesar(self.Frontier, spread_index)
-            if self.Frontier == None or iteration_count == iterations:
-                self.Goal_position = self.goalspreader(self.Nodes_changed)
+            selected_nodes = self.caesar(selected_nodes)
+            if selected_nodes == []:
+                self.Goal_position = self.goalspreader(self.Explored_nodes)
                 self.Base[self.Goal_position[0]][self.Goal_position[1]] = 'B'
-                return None
+                return 1
             else:
-                for i in self.Frontier:
-                    self.uniqueappend(i, self.Nodes_changed)
-            self.Coordinates = []
-            for i in self.Frontier:
-                self.Base[i[0]][i[1]] = 1
-                self.Coordinates.append(i)
-            self.Nodes_in_range = []
-            self.Frontier = []
+                for coordinates in selected_nodes:
+                    self.Base[coordinates[0]][coordinates[1]] = 1
+                    self.uniqueappend(coordinates, self.Explored_nodes)
+                    self.uniqueappend(coordinates, self.Frontier)
 
     # Miscellaneous
 
-    def quickgen(self, dimensions = 10, iterations = 200, spread_index = 3):
+    def quickgen(self, dimensions = 10):
         """
         Quick array and path generation with result display.
         """
         self.basegenerator(dimensions)
-        self.pathgenerator(iterations, spread_index)
+        self.pathgenerator(iterations)
         self.display()
 
 maze = Maze()
-maze.basegenerator()
+maze.basegenerator((20, 60))
 maze.pathgenerator()
 maze.display()
