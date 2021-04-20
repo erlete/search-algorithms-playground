@@ -1,5 +1,6 @@
 from random import randint
 from sys import path
+from time import time as t
 
 class Maze:
     """
@@ -145,13 +146,15 @@ class Maze:
                 (coordinates[0] + 1, coordinates[1]),   # Bottom
                 (coordinates[0], coordinates[1] - 1)    # Left
                 ]:
+            self.loops += 1
             surrounding_nodes.append(node)
 
         # Generates an order array
         order = []
         while True: # The infinite loop is necessary in order to provide with unique, random index appending to the 'order' array
             value = randint(0, len(surrounding_nodes) - 1)
-            self.uniqueappend(value, order) # If a value is repeated, it does not get appended
+            self.loops += 1
+            self.uniqueappend(value, order) # If a value is repeated, self.loops does not get appended
             if len(order) == len(surrounding_nodes):
                 break
 
@@ -159,6 +162,7 @@ class Maze:
         output = []
         for value in order:
             self.uniqueappend(surrounding_nodes[value], output)
+            self.loops += 1
         return output
 
     def surroundings(self, coordinates):
@@ -186,6 +190,7 @@ class Maze:
             (coordinates[0], coordinates[1] - 1)       # Middle left
             ]:
             surrounding_nodes.append(node)
+            self.loops += 1
         return surrounding_nodes
 
     def caesar(self, paths):
@@ -216,6 +221,7 @@ class Maze:
 
         # Checks every path node's distance to origin to determine which one is the farthest one
         for node in nodes_changed:
+            self.loops += 1
             if (self.Initial_position[0] + node[0], self.Initial_position[1] + node[1]) >= higher_distance:
                 higher_distance = (self.Initial_position[0] + node[0], self.Initial_position[1] + node[1])
 
@@ -230,38 +236,48 @@ class Maze:
         The 'iterations' parameter determines after how many path node generation attemps the algorithm should stop. For low values, the path might have a short length.
         """
         self.Frontier = [self.Initial_position]
-        self.Explored_nodes = self.Frontier.copy()
+        print('Generating array...')
+        ts = t()
 
         while True:
             selected_nodes, candidates = [], []
+
             # Checks for nodes around the specified one that are not "walls" (-1), "path tiles" (1) or the initial node ('A')
             for coordinates in self.Frontier:
                 for neighbor in self.nextnodes(coordinates):
+                    self.loops += 1
                     if self.Base[neighbor[0]][neighbor[1]] not in [-1, 1, 'A']:
-                        self.uniqueappend(neighbor, candidates) # Appends the selected nodes to the candidates list
-
+                        self.uniqueappend(neighbor, candidates) # Appends the valid nodes to the 'candidates' list
+            
+            # The nodes that were able to be transformed into 'path' are set as candidates and evaluated regardind the surrounding path tiles
             for candidate in candidates:
                 can_make_path = True
                 nearby_path_tiles = 0
                 for coordinates in self.surroundings(candidate):
+                    self.loops += 1
                     if self.Base[coordinates[0]][coordinates[1]] in [1, 'A']:
                         nearby_path_tiles += 1
                         if nearby_path_tiles == 3:
                             can_make_path = False
                             break
                 if can_make_path == True:
-                    selected_nodes.append(candidate)
+                    selected_nodes.append(candidate) # Appends the valid nodes to the 'selected' list
 
+            # Out of the 'selected' nodes array, a random amount of divergent paths are generated
             selected_nodes = self.caesar(selected_nodes)
-            if selected_nodes == []:
-                self.Goal_position = self.goalspreader(self.Explored_nodes)
+
+            # End of the path generation check
+            if selected_nodes == []: # If the generation process has finished (there are no avaliable nodes for path-making)
+                self.Goal_position = self.goalspreader(self.Frontier)
                 self.Base[self.Goal_position[0]][self.Goal_position[1]] = 'B'
+                te = t()
+                print(f"Array generated correctly. Time elapsed: {format(te - ts, '.4f')}s")
                 return 1
-            else:
+            else: # If the generation process has not yet finished (there are avaliable nodes for path-making)
                 for coordinates in selected_nodes:
-                    self.Base[coordinates[0]][coordinates[1]] = 1
-                    self.uniqueappend(coordinates, self.Explored_nodes)
-                    self.uniqueappend(coordinates, self.Frontier)
+                    self.loops += 1
+                    self.Base[coordinates[0]][coordinates[1]] = 1       # Sets the selected nodes as path tiles (1)
+                    self.uniqueappend(coordinates, self.Frontier)       # Appends the nodes to the 'Frontier' array
 
     # Miscellaneous
 
@@ -274,6 +290,8 @@ class Maze:
         self.display()
 
 maze = Maze()
-maze.basegenerator((20, 60))
+maze.loops = 0
+maze.basegenerator((60, 60))
 maze.pathgenerator()
 maze.display()
+print(maze.loops)
