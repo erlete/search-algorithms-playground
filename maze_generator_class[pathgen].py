@@ -1,46 +1,40 @@
-from random import randint
-from sys import path
-from time import time as t
+from random import randint  # random value generation
+from sys import path        # data export path
+from time import time       # time benchmarking
 
 class Maze:
     """
-    This class generates a blank array of (n x m) dimensions, composed by '-1' values in the borders and '0' values in the middle, the 'Base' property.
+    This class generates a blank array of (n x m) dimensions, made of '0' values, passed to the 'Base' property.
 
     Given that array, an algorithm generates a 'path', made out of '1' values, which later on can be evaluated by a search algorithm to keep track of the explored path, whose value is '2'.
 
     There are some debugging methods, such as 'log' and 'logdisplay', that are used in order to properly comprehend the path generation and solving behavior, and also help prevent potential bugs.
     """
-    # Tool method
-
-    def uniqueappend(self, element, group):
-        """
-        Method used to append unique items only. Prevents confusing 'if-else' statements reiteration.
-        """
-        if element not in group:
-            group.append(element)
-
     # Visualization method
 
     def display(self):
         """
         Display method for 'Base' property. Produces a symbolic representation from the numerical array.
         """
+        printed_row = '# ' + '— ' * self.Dimensions[0] + '#'
+        print(printed_row)
         for row in self.Base:
-            printed_row = ''
+            printed_row = '| '
             for element in row:
-                if element == -1:
-                    printed_row += '# ' # Outer wall display
-                elif element == 0:
+                if element == 0:
                     printed_row += '█ ' # Inner wall display
                 elif element == 1:
                     printed_row += '  ' # Generated path display
                 elif element == 2:
                     printed_row += 'x ' # Explored path display
-                elif element == 'A':
+                elif element == -10:
                     printed_row += 'A ' # Initial state display
-                elif element == 'B':
+                elif element == 10:
                     printed_row += 'B ' # Goal state display
+            printed_row += '| '
             print(printed_row)
+        printed_row = '# ' + '— ' * self.Dimensions[0] + '#'
+        print(printed_row)
 
     # Debugging methods
 
@@ -68,17 +62,15 @@ class Maze:
                 for row in self.Base:
                     printed_row = ''
                     for element in row:
-                        if element == -1:
-                            printed_row += '# ' # outer wall
-                        elif element == 0:
+                        if element == 0:
                             printed_row += '█ ' # inner wall
                         elif element == 1:
                             printed_row += '  ' # path
                         elif element == 2:
                             printed_row += '+ ' # explored path
-                        elif element == 'A':
+                        elif element == -10:
                             printed_row += 'A ' # initial state
-                        elif element == 'B':
+                        elif element == 10:
                             printed_row += 'B ' # goal state
                     f.write(printed_row + '\n')
                 f.write('\n\n')
@@ -93,7 +85,7 @@ class Maze:
 
     def basegenerator(self, dimensions = 10): # review (remove outer borders) (check for surrounding and sqsurrounding nodes behavior)
         """
-        Generates a numerical array, given its code structure (-1 = outer wall; 0 = inner wall; 1 = path; 'A' = initial state).
+        Generates a numerical array, given its code structure (0 = inner wall; 1 = path; -10 = initial state).
 
         The 'dimensions' parameter can be set in a regular or irregular way, using either an 'int' or a 'tuple' datatype.
         """
@@ -108,17 +100,12 @@ class Maze:
             raise Exception("The array can only be bidimensional.")
         else:
             raise Exception("The array dimensions must be specified either as an 'int' or two-term 'tuple'.")
+        self.Dimensions = dimensions # Class-wide variable for comparison
 
         # Base generation
-        self.Base = [[0 for i in range(dimensions[1] + 2)] for j in range(dimensions[0] + 2)] # Base generation (0)
+        self.Base = [[0 for i in range(dimensions[1])] for j in range(dimensions[0])] # Base generation (0)
 
-        self.Base[0] = [-1 for i in range(len(self.Base[0]))]   # Top outer wall (-1)
-        self.Base[-1] = self.Base[0].copy()                     # Bottom outer wall (-1)
-        for i in range(len(self.Base)):
-                self.Base[i][-1] = -1                           # Right outer wall (-1)
-                self.Base[i][0] = -1                            # Left outer wall (-1)
-
-        self.Base[1][1] = 'A'           # Initial state definition
+        self.Base[0][0] = -10           # Initial state definition
         self.Initial_position = (1, 1)  # Initial state position
 
     # Node surroundings evaluation methods
@@ -146,20 +133,23 @@ class Maze:
                 (coordinates[0] + 1, coordinates[1]),   # Bottom
                 (coordinates[0], coordinates[1] - 1)    # Left
                 ]:
-            surrounding_nodes.append(node)
+            if node[0] <= self.Dimensions[0] - 1 and node[1] <= self.Dimensions[1] - 1:
+                if node[0] >= 0 and node[1] >= 0:
+                    surrounding_nodes.append(node)
+            #surrounding_nodes.append(node) if node[0] >= 0 and node[1] >= 0 and node <= self.Dimensions else None
 
         # Generates an order array
         order = []
         while True: # The infinite loop is necessary in order to provide with unique, random index appending to the 'order' array
             value = randint(0, len(surrounding_nodes) - 1)
-            self.uniqueappend(value, order) # If a value is repeated, it does not get appended
+            order.append(value) if value not in order else None
             if len(order) == len(surrounding_nodes):
                 break
 
         # Outputs the surrounding nodes in the randomly defined order
         output = []
         for value in order:
-            self.uniqueappend(surrounding_nodes[value], output)
+            output.append(surrounding_nodes[value]) if surrounding_nodes[value] not in output else None
         return output
 
     def surroundings(self, coordinates):
@@ -186,7 +176,10 @@ class Maze:
             (coordinates[0] + 1, coordinates[1] - 1),   # Bottom left
             (coordinates[0], coordinates[1] - 1)       # Middle left
             ]:
-            surrounding_nodes.append(node)
+            if node[0] <= self.Dimensions[0] - 1 and node[1] <= self.Dimensions[1] - 1:
+                if node[0] >= 0 and node[1] >= 0:
+                    surrounding_nodes.append(node)
+            #surrounding_nodes.append(node) if node[0] > 0 and node[1] > 0 and node else None
         return surrounding_nodes
 
     def caesar(self, paths):
@@ -198,15 +191,16 @@ class Maze:
         # Error Prevention:
         if len(paths) == 0:
             return []
-        else:
+
+        while True:
             selected = []
-            while True:
-                for element in paths:
-                    selection_value = randint(0, 10)
-                    if selection_value >= 5:
-                        selected.append(element)
-                if len(selected) >= 1:
-                    return selected
+            for element in paths:
+                value = randint(0, 1)
+                selected.append(element) if value else None
+            if len(selected) >= 1:
+                break
+
+        return selected
 
     def goalspreader(self, nodes_changed):
         """
@@ -230,25 +224,28 @@ class Maze:
 
         The 'iterations' parameter determines after how many path node generation attemps the algorithm should stop. For low values, the path might have a short length.
         """
+
+        d = 1
+
         self.Frontier = [self.Initial_position]
         print('Generating array...')
-        ts = t()
+        ts = time()
 
         while True:
             selected_nodes, candidates = [], []
 
-            # Checks for nodes around the specified one that are not "walls" (-1), "path tiles" (1) or the initial node ('A')
+            # Checks for nodes around the specified one that are not "path tiles" (1) or the initial node (-10)
             for coordinates in self.Frontier:
                 for neighbor in self.nextnodes(coordinates):
-                    if self.Base[neighbor[0]][neighbor[1]] not in [-1, 1, 'A']:
-                        self.uniqueappend(neighbor, candidates) # Appends the valid nodes to the 'candidates' list
+                    if self.Base[neighbor[0]][neighbor[1]] not in [1, -10]:
+                        candidates.append(neighbor) if neighbor not in candidates else None
             
             # The nodes that were able to be transformed into 'path' are set as candidates and evaluated regardind the surrounding path tiles
             for candidate in candidates:
                 can_make_path = True
                 nearby_path_tiles = 0
                 for coordinates in self.surroundings(candidate):
-                    if self.Base[coordinates[0]][coordinates[1]] in [1, 'A']:
+                    if self.Base[coordinates[0]][coordinates[1]] in [1, -10]:
                         nearby_path_tiles += 1
                         if nearby_path_tiles == 3:
                             can_make_path = False
@@ -262,26 +259,16 @@ class Maze:
             # End of the path generation check
             if selected_nodes == []: # If the generation process has finished (there are no avaliable nodes for path-making)
                 self.Goal_position = self.goalspreader(self.Frontier)
-                self.Base[self.Goal_position[0]][self.Goal_position[1]] = 'B'
-                te = t()
+                self.Base[self.Goal_position[0]][self.Goal_position[1]] = 10
+                te = time()
                 print(f"Array generated correctly. Time elapsed: {format(te - ts, '.4f')}s")
                 return 1
             else: # If the generation process has not yet finished (there are avaliable nodes for path-making)
                 for coordinates in selected_nodes:
-                    self.Base[coordinates[0]][coordinates[1]] = 1       # Sets the selected nodes as path tiles (1)
-                    self.uniqueappend(coordinates, self.Frontier)       # Appends the nodes to the 'Frontier' array
-
-    # Miscellaneous
-
-    def quickgen(self, dimensions = 10):
-        """
-        Quick array and path generation with result display.
-        """
-        self.basegenerator(dimensions)
-        self.pathgenerator(iterations)
-        self.display()
+                    self.Base[coordinates[0]][coordinates[1]] = 1 # Sets the selected nodes as path tiles (1)
+                    self.Frontier.append(coordinates) if coordinates not in self.Frontier else None # Appends the nodes to the 'Frontier' array
 
 maze = Maze()
-maze.basegenerator((60, 60))
+maze.basegenerator(20)
 maze.pathgenerator()
 maze.display()
