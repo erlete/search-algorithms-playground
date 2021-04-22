@@ -7,8 +7,6 @@ class Maze:
     This class generates a blank array of (n x m) dimensions, made of '0' values, passed to the 'Base' property.
 
     Given that array, an algorithm generates a 'path', made out of '1' values, which later on can be evaluated by a search algorithm to keep track of the explored path, whose value is '2'.
-
-    There are some debugging methods, such as 'log' and 'logdisplay', that are used in order to properly comprehend the path generation and solving behavior, and also help prevent potential bugs.
     """
     # Visualization method
 
@@ -16,7 +14,7 @@ class Maze:
         """
         Display method for 'Base' property. Produces a symbolic representation from the numerical array.
         """
-        printed_row = '# ' + '— ' * self.Dimensions[0] + '#'
+        printed_row = '# ' + '— ' * self.Dimensions[1] + '#'
         print(printed_row)
         for row in self.Base:
             printed_row = '| '
@@ -33,53 +31,8 @@ class Maze:
                     printed_row += 'B ' # Goal state display
             printed_row += '| '
             print(printed_row)
-        printed_row = '# ' + '— ' * self.Dimensions[0] + '#'
+        printed_row = '# ' + '— ' * self.Dimensions[1] + '#'
         print(printed_row)
-
-    # Debugging methods
-
-    def log(self, item: str, switch = False):
-        """
-        Logging method for convenient data markers in the algorithm.
-        """
-        if switch == True:
-            try:
-                f = open(path[0] + "/textual_log.txt", 'r')
-            except FileNotFoundError:
-                f = open(path[0] + "/textual_log.txt", 'a')
-                f.write(item + '\n')
-                f.close()
-
-    def logdisplay(self, switch = False):
-        """
-        Logging method for 'Base' property. Same behavior as the 'display' method.
-        """
-        if switch == True:
-            try:
-                f = open(path[0] + "/visual_log.txt", 'r')
-            except FileNotFoundError:
-                f = open(path[0] + "/visual_log.txt", 'a')
-                for row in self.Base:
-                    printed_row = ''
-                    for element in row:
-                        if element == 0:
-                            printed_row += '█ ' # inner wall
-                        elif element == 1:
-                            printed_row += '  ' # path
-                        elif element == 2:
-                            printed_row += '+ ' # explored path
-                        elif element == -10:
-                            printed_row += 'A ' # initial state
-                        elif element == 10:
-                            printed_row += 'B ' # goal state
-                    f.write(printed_row + '\n')
-                f.write('\n\n')
-
-                for row in self.Base:
-                    f.write(str(row)[1:-1].replace(',', ''))
-                f.write('\n\n')
-
-                f.close()
 
     # Base generation method
 
@@ -269,6 +222,6 @@ class Maze:
                     self.Frontier.append(coordinates) if coordinates not in self.Frontier else None # Appends the nodes to the 'Frontier' array
 
 maze = Maze()
-maze.basegenerator(20)
+maze.basegenerator((5,10))
 maze.pathgenerator()
 maze.display()
