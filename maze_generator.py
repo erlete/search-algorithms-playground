@@ -153,13 +153,13 @@ class Maze:
         ts = time()
         print('Generating array...')
 
-        self.Frontier = [self.Initial]
+        frontier = [self.Initial]
 
         while True:
             selected_nodes, candidates = [], []
 
             # Checks for new path candidates around the node whose values are not '1' (path) nor '-10' (initial node)
-            for coordinates in self.Frontier:
+            for coordinates in Frontier:
                 for neighbor in self.nextnodes(coordinates):
                     if self.Base[neighbor[0]][neighbor[1]] not in [1, -10]:
                         candidates.append(neighbor) if neighbor not in candidates else None
@@ -187,7 +187,7 @@ class Maze:
 
             # Check for the end of the path generation process
             if selected_nodes == []: # Generation process finished
-                self.Goal = self.goalspreader(self.Frontier)
+                self.Goal = self.goalspreader(frontier)
                 self.Base[self.Goal[0]][self.Goal[1]] = 10
 
                 te = time()
@@ -197,7 +197,7 @@ class Maze:
             else: # Generation process not yet finished (there are avaliable nodes for path-making)
                 for coordinates in selected_nodes:
                     self.Base[coordinates[0]][coordinates[1]] = 1
-                    self.Frontier.append(coordinates) if coordinates not in self.Frontier else None
+                    frontier.append(coordinates) if coordinates not in frontier else None
 
     # Visualization method
 
@@ -224,8 +224,3 @@ class Maze:
             print(printed_row)
         printed_row = '# ' + '— ' * self.Dimensions[1] + '#'
         print(printed_row)
-
-maze = Maze()
-maze.basegenerator(20)
-maze.pathgenerator()
-maze.display()
