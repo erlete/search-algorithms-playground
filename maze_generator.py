@@ -159,7 +159,7 @@ class Maze:
             selected_nodes, candidates = [], []
 
             # Checks for new path candidates around the node whose values are not '1' (path) nor '-10' (initial node)
-            for coordinates in Frontier:
+            for coordinates in frontier:
                 for neighbor in self.nextnodes(coordinates):
                     if self.Base[neighbor[0]][neighbor[1]] not in [1, -10]:
                         candidates.append(neighbor) if neighbor not in candidates else None
