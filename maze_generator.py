@@ -205,22 +205,24 @@ class Maze:
         """
         Display method for 'Base' property. Produces a symbolic representation from the numerical array.
         """
-        printed_row = '# ' + '— ' * self.Dimensions[1] + '#'
+        printed_row = '╔═' + '══' * self.Dimensions[1] + '╗'
         print(printed_row)
         for row in self.Base:
-            printed_row = '| '
+            printed_row = '║ '
             for element in row:
                 if element == 0:
                     printed_row += '█ ' # Inner wall display
                 elif element == 1:
                     printed_row += '  ' # Generated path display
                 elif element == 2:
-                    printed_row += 'x ' # Explored path display
+                    printed_row += '░ ' # Explored path display
+                elif element == 3:
+                    printed_row += '≡ ' # Tracked path display
                 elif element == -10:
                     printed_row += 'A ' # Initial state display
                 elif element == 10:
                     printed_row += 'B ' # Goal state display
-            printed_row += '| '
+            printed_row += '║ '
             print(printed_row)
-        printed_row = '# ' + '— ' * self.Dimensions[1] + '#'
+        printed_row = '╚═' + '══' * self.Dimensions[1] + '╝'
         print(printed_row)
