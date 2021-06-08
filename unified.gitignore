@@ -23,7 +23,6 @@ __pycache__/\
 \
 # Distribution / packaging\
 .Python\
-.pyc
 build/\
 develop-eggs/\
 dist/\
