@@ -191,7 +191,7 @@ class Maze:
                 self.Base[self.Goal[0]][self.Goal[1]] = 10
 
                 te = time()
-                print(f"Array generated correctly. Time elapsed: {format(te - ts, '.4f')}s")
+                print(f"Array generated correctly\tTime elapsed: {format(te - ts, '.4f')}s")
 
                 return 1
             else: # Generation process not yet finished (there are avaliable nodes for path-making)

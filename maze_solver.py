@@ -1,4 +1,3 @@
-from maze_generator import Maze
 from time import time
 
 class Solver():
@@ -98,15 +97,9 @@ class Solver():
                             frontier.append(neighbor) if neighbor not in frontier else None
                         elif self.Base[neighbor[0]][neighbor[1]] == 10:
                             te = time()
-                            print(f"Array searched correctly. Time elapsed: {format(te - ts, '.4f')}s.")
+                            print(f"Array searched correctly\tTime elapsed: {format(te - ts, '.4f')}s.")
                             return 1
 
             # If there are no nodes to be explored (no solution)
             else:
                 return 0
-
-maze = Maze()
-maze.basegenerator((30, 60)); maze.pathgenerator(); maze.display()
-
-solve = Solver(maze)
-solve.solve_2(); solve.display()
