@@ -1,20 +1,26 @@
-from maze_generator import Maze
-from maze_solver import Solver
+from main import Maze
 
-# Array size definition:
+def genTest(size = (40, 40)):
+    obj = Maze(size)
+    obj.pathgenerator()
+    print(obj)    
 
-Xsize = 30
-Ysize = 30
+def solveTest1(size = (40, 40)):
+    obj = Maze(size)
+    obj.pathgenerator()
+    print(obj)
 
-# Array generation and display:
+    obj.dfs()
+    print(obj)
 
-test = Maze()
-test.basegenerator((Xsize, Ysize))
-test.pathgenerator()
-test.display()
+def solveTest2(size = (40, 40)):
+    obj = Maze(size)
+    obj.pathgenerator()
+    print(obj)
 
-# Path finding and display:
+    obj.gbfs()
+    print(obj)
 
-solved_test = Solver(test)
-solved_test.solve_2()
-solved_test.display()
+genTest((40, 80))
+solveTest1((40, 80))
+solveTest2((40, 80))
