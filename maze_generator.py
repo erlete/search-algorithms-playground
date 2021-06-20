@@ -109,7 +109,7 @@ class Maze:
     def pathgenerator(self):
         """Randomly generates a pathway for the array."""
         ts = time()
-        print('Generating array...')
+        print(' Generating array... '.center(self.Dimensions[1] * 2 + 2, '-'))
 
         frontier = [self.Initial]
 
@@ -136,13 +136,111 @@ class Maze:
                 self.Base[self.Goal[0]][self.Goal[1]] = 10
 
                 te = time()
-                print(f"Array generated correctly\tTime elapsed: {format(te - ts, '.4f')}s")
+                print(f' Array generated correctly. Time elapsed: {(te - ts):.4}s. '.center(self.Dimensions[1] * 2 + 2, '-'))
 
                 return
             else: # Generation process not yet finished (there are avaliable nodes for path-making)
                 frontier.extend(selectedNodes)
                 for coordinates in selectedNodes:
                     self.Base[coordinates[0]][coordinates[1]] = 1
+
+        self.Distances = dict()
+        for row in range(len(self.Base)):
+            for column in range(len(self.Base[row])):
+                if self.Base[row][column] == 1:
+                    self.Distances[(row, column)] = self.manhattan((row, column))
+
+    def manhattan(self, coordinates: tuple):
+        """Returns the manhattan distance between two nodes (sum of the absolute
+        cartesian coordinates difference between a selected node and the goal
+        node).The values are set as absolute to prevent search deviations due to
+        negative coordinates addition.
+        """
+        return abs(self.Goal[0] - coordinates[0]) + abs(self.Goal[1] - coordinates[1])
+
+    def dfs(self):
+        """Depth-First Search (DFS)."""
+        self.Distances = dict()
+        for row in range(len(self.Base)):
+            for column in range(len(self.Base[row])):
+                if self.Base[row][column] == 1:
+                    self.Distances[(row, column)] = self.manhattan((row, column))
+
+        ts = time()
+        print(' Searching array... '.center(self.Dimensions[1] * 2 + 2, '-'))
+        explored = list()
+        frontier = self.nextnodes(self.Initial)
+
+        while True:
+
+            # If there are nodes to be explored (avaliable solution)
+            if len(frontier) >= 1:
+                
+                # 1. Node extraction from the frontier
+                node = frontier[-1]
+                frontier = frontier[:-1]
+
+                # 2. Node conversion to path
+                if node not in [self.Initial, self.Goal]:
+                    self.Base[node[0]][node[1]] = 2
+                    explored.append(node) if node not in explored else None
+
+                    # 3. Neighbor gathering and pathfinding process termination evaluation
+                    for neighbor in self.nextnodes(node):
+                        if self.Base[neighbor[0]][neighbor[1]] == 1:
+                            frontier.append(neighbor) if neighbor not in frontier else None
+                        elif self.Base[neighbor[0]][neighbor[1]] == 10:
+                            te = time()
+                            print(f' Array searched correctly. Time elapsed: {(te - ts):.4}s. '.center(self.Dimensions[1] * 2 + 2, '-'))
+                            return 1
+            
+            # If there are no nodes to be explored (no solution)
+            else:
+                return 0
+
+    def gbfs(self):
+        """Greedy Best-First Search (GBFS)."""
+        self.Distances = dict()
+        for row in range(len(self.Base)):
+            for column in range(len(self.Base[row])):
+                if self.Base[row][column] == 1:
+                    self.Distances[(row, column)] = self.manhattan((row, column))
+        ts = time()
+        print(' Searching array... '.center(self.Dimensions[1] * 2 + 2, '-'))
+        frontier, explored = list(), [self.Initial]
+        for node in self.nextnodes(self.Initial):
+            if self.Base[node[0]][node[1]] == 1:
+                frontier.append(node)
+
+        while True:
+
+            # If there are nodes to be explored (avaliable solution)
+            if len(frontier) >= 1:
+
+                # 1. Node extraction from the frontier
+                node = frontier[-1]
+                for candidate in frontier: # Takes the node with the lower distance to goal
+                    if self.Distances[(candidate[0], candidate[1])] < self.Distances[(node[0], node[1])]:
+                        node = candidate
+                del frontier[frontier.index(node)]
+
+                # 2. Node conversion to path
+                if node not in [self.Initial, self.Goal]:
+                    self.Base[node[0]][node[1]] = 2
+                    explored.append(node) if node not in explored else None
+
+                    # 3. Neighbor gathering and pathfinding process termination evaluation
+                    for neighbor in self.nextnodes(node):
+                        if self.Base[neighbor[0]][neighbor[1]] == 1:
+                            frontier.append(neighbor) if neighbor not in frontier else None
+                        elif self.Base[neighbor[0]][neighbor[1]] == 10:
+                            te = time()
+                            print(f' Array searched correctly. Time elapsed: {(te - ts):.4}s. '.center(self.Dimensions[1] * 2 + 2, '-'))
+                            return 1
+
+            # If there are no nodes to be explored (no solution)
+            else:
+                return 0
 
     def __repr__(self):
         strOut = f"╔═{'══' * self.Dimensions[1]}╗\n"
