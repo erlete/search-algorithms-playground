@@ -3,11 +3,11 @@ from time import time
 
 class Maze:
     """This class generates a blank array of (m x n) dimensions, made of '0'
-    values, passed to the 'Base' property.
+    values, stored in the 'Base' attribute.
 
     Given that array, an algorithm generates a 'path', made out of '1' values,
-    which later on can be evaluated by a search algorithm to keep track of the
-    explored path, whose value is '2'.
+    which later on can be evaluated by a search algorithm in order to explore
+    the path. Explored nodes have a numerical value of '2'.
 
     The initial and goal states are represented by '-10' and '10' values,
     respectively.
@@ -15,12 +15,6 @@ class Maze:
     # Base generation method
 
     def __init__(self, dimensions = 10):
-        """Generates a numerical array, given its code structure (0 = inner
-        wall; 1 = path; -10 = initial state).
-
-        The 'dimensions' parameter can be set in a regular or irregular way,
-        using either an 'int' or a 'tuple' datatype.
-        """
         if type(dimensions) == int and dimensions > 1:
             self.Dimensions = (dimensions, dimensions)
         elif type(dimensions) == tuple and len(dimensions) == 2 and dimensions[0] > 1 and dimensions[1] > 1:
@@ -33,19 +27,14 @@ class Maze:
         self.Initial = (0, 0) # Initial position.
 
     def nextnodes(self, coordinates):
-        """Gets the nodes immediately next to the given coordinates (top, right,
-        bottom and left slots).
+        """Gets the nodes immediately next to the given coordinates from
+        'self.Base'.
 
-        The order in which the surrounding nodes are passed to the algorithm is
-        set in a random way, to prevent data pre-setting. This is done by
-        getting the coordinates of the nodes surrounding the one specified and
-        appending those coordinates to an output array in a randomly defined
-        order.
-
-        Note: there must be a more efficient alternative to this process,
-        however, this is not a priority just yet.
+        The order in which the surrounding nodes are returned is set in a random
+        way, in order to prevent data pre-setting.
         
         Process illustration:
+        ---------------------
 
                 T
             L   X   R
@@ -62,14 +51,14 @@ class Maze:
 
     def surroundings(self, coordinates):
         """Gets the values in the square surroundings of the given coordinates.
-        This method is used in order to prevent path mixing during its
-        generation.
+        This method is used in order to prevent path mixing during generation.
 
         Since the method is only used to evaluate the amount of nearby 'path'
-        values (1) near the considered node during path generation, there is no
-        point in setting up a random order method.
+        values near the considered node during path generation, there is no
+        point in returning a randomized sample.
         
         Process illustration:
+        ---------------------
 
             TL  TC  TR
             ML  XX  MR
@@ -97,8 +86,8 @@ class Maze:
         return sample(nodes, randint(1, len(nodes))) if len(nodes) > 0 else []
 
     def goalspreader(self, path_tiles):
-        """Sets the position of the goal state at the farthest coordinate
-        possible in the array.
+        """Sets the position of the goal state at the farthest possible
+        coordinate in the array.
         """
         distance = (self.Initial[0] + path_tiles[0][0], self.Initial[1] + path_tiles[0][1])
         for path in path_tiles:
@@ -243,18 +232,20 @@ class Maze:
                 return 0
 
     def __repr__(self):
-        strOut = f"╔═{'══' * self.Dimensions[1]}╗\n"
-        for row in self.Base:
-            strOut += '║ '
-            for element in row:
-                strOut += {
-                    element == 0:   '█ ',
-                    element == 1:   '  ',
-                    element == 2:   '░ ',
-                    element == 3:   '≡ ',
-                    element == -10: 'A ',
-                    element == 10:  'B '
-                }[True]
-            strOut += '║\n'
-        strOut += f"╚═{'══' * self.Dimensions[1]}╝"
-        return strOut
+        visual = {
+            0:   '█ ',
+            1:   '  ',
+            2:   '░ ',
+            3:   '≡ ',
+            -10: 'A ',
+            10:  'B '
+        }
+        return f"╔═{2 * '═' * self.Dimensions[1]}╗\n" +\
+               ''.join(
+                   ''.join(
+                       [f'║ ' + ''.join(
+                           [visual[element] for element in row]
+                       ) + f'║\n']
+                   ) for row in self.Base
+               ) +\
+               f"╚═{2 * '═' * self.Dimensions[1]}╝"
