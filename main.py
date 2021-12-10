@@ -16,18 +16,27 @@ class Unnamed:
 
     def __eq__(self, element):
         if isinstance(element, Unnamed):
-            return True if self.primary == element.primary else False
-        raise Exception(f"Can't compare <class 'Unnamed'> with {type(element)}.")
+            return self.primary == element.primary
+        raise Exception(
+            f"Can't compare <class 'Unnamed'> with {type(element)}."
+            )
+
 
     def __gt__(self, element):
         if isinstance(element, Unnamed):
-            return True if self.primary > element.primary else False
-        raise Exception(f"Can't compare <class 'Unnamed'> with {type(element)}.")
+            return self.primary > element.primary
+        raise Exception(
+            f"Can't compare <class 'Unnamed'> with {type(element)}."
+            )
+
 
     def __lt__(self, element):
         if isinstance(element, Unnamed):
-            return True if self.primary < element.primary else False
-        raise Exception(f"Can't compare <class 'Unnamed'> with {type(element)}.")
+            return self.primary < element.primary
+        raise Exception(
+            f"Can't compare <class 'Unnamed'> with {type(element)}."
+            )
+
 
     def __repr__(self):
         return f"(P: {self.primary}, S: {self.secondary})"
@@ -35,25 +44,34 @@ class Unnamed:
 
 class Node:
     def __init__(self, x: int, y: int, state = 0):
-        self.X = x
-        self.Y = y
-        self.coordinates = (self.X, self.Y)
+        self.X, self.Y = x, y
+        self.coordinates = (x, y)
         self.state = state
+
 
     def __eq__(self, element):
         if isinstance(element, Node):
-            return True if self.X + self.Y == element.X + element.Y else False
-        raise Exception(f"Can't compare <class 'Node'> with {type(element)}.")
+            return self.X + self.Y == element.X + element.Y
+        raise Exception(
+            f"Can't compare <class 'Node'> with {type(element)}."
+            )
+
 
     def __gt__(self, element):
         if isinstance(element, Node):
-            return True if self.X + self.Y > element.X + element.Y else False
-        raise Exception(f"Can't compare <class 'Node'> with {type(element)}.")
+            return self.X + self.Y > element.X + element.Y
+        raise Exception(
+            f"Can't compare <class 'Node'> with {type(element)}."
+            )
+
 
     def __lt__(self, element):
         if isinstance(element, Node):
-            return True if self.X + self.Y < element.X + element.Y else False
-        raise Exception(f"Can't compare <class 'Node'> with {type(element)}.")
+            return self.X + self.Y < element.X + element.Y
+        raise Exception(
+            f"Can't compare <class 'Node'> with {type(element)}."
+            )
+
 
     def __repr__(self):
         return f"(X: {self.X}, Y: {self.Y}, S: {self.state})"
@@ -72,34 +90,31 @@ class Maze:
     """
 
     def __init__(self, dimensions = (10, 10), verbose = False):
-        if isinstance(dimensions, tuple):
-            if  (dimensions[0] + dimensions[1]) / 2 > 1:
-                self.DIMENSIONS = dimensions
-                self.X = self.DIMENSIONS[0]
-                self.Y = self.DIMENSIONS[1]
-            else:
-                raise Exception("Tuple's elements must be integers greater "
-                                "than one.")
-        else:
-            raise Exception("Dimensions must be a 2-tuple")
+        if not isinstance(dimensions, tuple):
+            raise Exception("Dimensions must be a 2-tuple.")
+        if (dimensions[0] + dimensions[1]) / 2 <= 1:
+            raise Exception("Dimensions' values must be greater than one.")
+
+        self.X = dimensions[0]
+        self.Y = dimensions[1]
+        self.DIMENSIONS = dimensions
 
         self.base = [
-            [Node(column, row, 0) for column in range(self.X)]
-            for row in range(self.Y)
+            [ Node(column, row, 0) for column in range(self.X)
+            ] for row in range(self.Y)
         ]
 
+        self.start = self.base[randrange(0, self.Y)][randrange(0, self.X)]
+        self.start.state = -10
+
+        # TODO: Refactorize
         self.node_map = []
         for row in self.base:
             self.node_map.extend(row)
 
         self.verbose = verbose
 
-        self.start = self.base[randrange(0, self.Y)][randrange(0, self.X)]
-        self.start.state = -10
-
         self.log(f"Start: {self.start}")
-
-        self.distances = {}
 
         self.log(["Node map:"] + [row for row in self.base])
 
@@ -420,11 +435,11 @@ class Maze:
 
                 # Start
                 elif column.state == -10:
-                    fill = (255, 0, 0)
+                    fill = (50, 171, 28)
 
                 # Goal
                 elif column.state == 10:
-                    fill = (50, 171, 28)
+                    fill = (255, 0, 0)
 
                 # Explored
                 elif column.state == 2:
