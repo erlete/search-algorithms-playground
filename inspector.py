@@ -23,7 +23,7 @@ class Inspector:
 
 
 	def benchmark(self):
-		self.x_axis, self.y_axis, self.mazes = [], [], [
+		self.x_axis, self.y_axis, self.mazes = [], [], []
 
 		for iteration in range(self.start, self.start + self.cycles):
 			dimension = iteration if not self.constant else self.start
