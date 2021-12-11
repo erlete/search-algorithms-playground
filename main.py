@@ -1,460 +1,538 @@
 """Main generator and solver module for search algorithms testing."""
 
 
-from PIL import Image, ImageDraw
-from math import log
-from random import randint, randrange, sample
-from time import time
 from datetime import datetime
+from math import log
+from PIL import Image, ImageDraw
+from random import randint, randrange, sample
+from os import mkdir, path
+from time import time
 
 
 class Unnamed:
-    def __init__(self, primary, secondary):
-        self.primary = primary
-        self.secondary = secondary
+	def __init__(self, primary, secondary):
+		self.primary = primary
+		self.secondary = secondary
 
 
-    def __eq__(self, element):
-        if isinstance(element, Unnamed):
-            return self.primary == element.primary
-        raise Exception(
-            f"Can't compare <class 'Unnamed'> with {type(element)}."
-            )
+	def __eq__(self, element):
+		if isinstance(element, Unnamed):
+			return self.primary == element.primary
+		raise Exception(
+			f"Can't compare <class 'Unnamed'> with {type(element)}."
+			)
 
 
-    def __gt__(self, element):
-        if isinstance(element, Unnamed):
-            return self.primary > element.primary
-        raise Exception(
-            f"Can't compare <class 'Unnamed'> with {type(element)}."
-            )
+	def __gt__(self, element):
+		if isinstance(element, Unnamed):
+			return self.primary > element.primary
+		raise Exception(
+			f"Can't compare <class 'Unnamed'> with {type(element)}."
+			)
 
 
-    def __lt__(self, element):
-        if isinstance(element, Unnamed):
-            return self.primary < element.primary
-        raise Exception(
-            f"Can't compare <class 'Unnamed'> with {type(element)}."
-            )
+	def __lt__(self, element):
+		if isinstance(element, Unnamed):
+			return self.primary < element.primary
+		raise Exception(
+			f"Can't compare <class 'Unnamed'> with {type(element)}."
+			)
 
 
-    def __repr__(self):
-        return f"(P: {self.primary}, S: {self.secondary})"
+	def __repr__(self):
+		return f"(P: {self.primary}, S: {self.secondary})"
 
 
 class Node:
-    def __init__(self, x: int, y: int, state = 0):
-        self.X, self.Y = x, y
-        self.coordinates = (x, y)
-        self.state = state
+	def __init__(self, x: int, y: int, state=0, color=(0, 0, 0)):
+		# Spatial attributes:
+		self.X, self.Y = x, y
+		self.coordinates = (x, y)
+
+		# Qualitative attributes:
+		self.state = state
+		self.color = color
 
 
-    def __eq__(self, element):
-        if isinstance(element, Node):
-            return self.X + self.Y == element.X + element.Y
-        raise Exception(
-            f"Can't compare <class 'Node'> with {type(element)}."
-            )
+	def __eq__(self, element):
+		if isinstance(element, Node):
+			return self.X + self.Y == element.X + element.Y
+		raise Exception(
+			f"Can't compare <class 'Node'> with {type(element)}."
+			)
 
 
-    def __gt__(self, element):
-        if isinstance(element, Node):
-            return self.X + self.Y > element.X + element.Y
-        raise Exception(
-            f"Can't compare <class 'Node'> with {type(element)}."
-            )
+	def __gt__(self, element):
+		if isinstance(element, Node):
+			return self.X + self.Y > element.X + element.Y
+		raise Exception(
+			f"Can't compare <class 'Node'> with {type(element)}."
+			)
 
 
-    def __lt__(self, element):
-        if isinstance(element, Node):
-            return self.X + self.Y < element.X + element.Y
-        raise Exception(
-            f"Can't compare <class 'Node'> with {type(element)}."
-            )
+	def __lt__(self, element):
+		if isinstance(element, Node):
+			return self.X + self.Y < element.X + element.Y
+		raise Exception(
+			f"Can't compare <class 'Node'> with {type(element)}."
+			)
 
 
-    def __repr__(self):
-        return f"(X: {self.X}, Y: {self.Y}, S: {self.state})"
+	def __repr__(self):
+		return f"(X: {self.X}, Y: {self.Y}, S: {self.state})"
 
 
 class Maze:
-    """This class generates a blank array of (m x n) dimensions, made of '0'
-    values, stored in the 'Base' attribute.
+	"""This class generates a blank array of (m x n) dimensions, made of '0'
+	values, stored in the 'Base' attribute.
+
+	Given that array, an algorithm generates a 'path', made out of '1' values,
+	which later on can be evaluated by a search algorithm in order to explore
+	the path. Explored nodes have a numerical value of '2'.
+
+	The initial and goal states are represented by '-10' and '10' values,
+	respectively.
+	"""
+
+	def __init__(self, dimensions=(10, 10), logger=False):
+		if not isinstance(dimensions, tuple):
+			raise Exception("Dimensions must be a 2-tuple.")
+		if (dimensions[0] + dimensions[1]) / 2 <= 1:
+			raise Exception("Dimensions' values must be greater than one.")
+
+		# Image output:
+		self.start_color = (82, 84, 169)
+		self.end_color = (80, 210, 110)
+		self.wall_color = (0, 0, 0)
+		self.path_color = (175, 175, 175)
+		self.explored_color = (
+			self.start_color[0],
+			self.start_color[1],
+			self.start_color[2]
+		)
+
+		self.r_diff, self.g_diff, self.b_diff = 0, 0, 0
+
+		# Array settings:
+		self.X = dimensions[0]
+		self.Y = dimensions[1]
+		self.DIMENSIONS = dimensions
+
+		# Bidimensional node array:
+		self.base = [
+			[Node(column, row, state=0, color=self.wall_color)
+			for column in range(self.X)] for row in range(self.Y)
+		]
+
+		# Starting point selection:
+		self.start = self.base[randrange(0, self.Y)][randrange(0, self.X)]
+		self.start.state = -10
+		self.start.color = self.start_color
+
+		# Plain node array:
+		self.node_map = []
+		for row in self.base:
+			self.node_map.extend(row)
 
-    Given that array, an algorithm generates a 'path', made out of '1' values,
-    which later on can be evaluated by a search algorithm in order to explore
-    the path. Explored nodes have a numerical value of '2'.
+		self.is_explored = False
 
-    The initial and goal states are represented by '-10' and '10' values,
-    respectively.
-    """
+		# Logger settings:
+		self.logger = logger
+		self.LOG_FILE = f"log{int(time())}.txt"
+		self.PREFIX = datetime.now().isoformat()
+		self.SEPARATOR = '-'
 
-    def __init__(self, dimensions = (10, 10), verbose = False):
-        if not isinstance(dimensions, tuple):
-            raise Exception("Dimensions must be a 2-tuple.")
-        if (dimensions[0] + dimensions[1]) / 2 <= 1:
-            raise Exception("Dimensions' values must be greater than one.")
 
-        self.X = dimensions[0]
-        self.Y = dimensions[1]
-        self.DIMENSIONS = dimensions
 
-        self.base = [
-            [ Node(column, row, 0) for column in range(self.X)
-            ] for row in range(self.Y)
-        ]
 
-        self.start = self.base[randrange(0, self.Y)][randrange(0, self.X)]
-        self.start.state = -10
+	def writer(self, file: str, argument, indentation: int, newlines: int):
+		header = f"+ {datetime.now().isoformat()} "
+		file.write(
+			header.ljust(
+				len(header) + 4 * (indentation + 1), self.SEPARATOR
+			) + f" {argument}" + newlines * '\n'
+		)
+
+
+	def log(self, *arguments, indentation=0, expand=True):
+		if not self.logger:
+			return None
+
+		with open(self.LOG_FILE, mode='a') as lg:
+			if len(arguments) >= 1:
+				self.writer(lg, arguments[0], indentation, 1)
+
+				if len(arguments) > 1:
+					for argument in arguments[1:]:
+						if isinstance(argument, (list, tuple, set)) and expand:
+							for index, element in enumerate(argument):
+								self.writer(lg, f"{index} :: {element}", indentation + 2, 1)
+						else:
+							self.writer(lg, argument, indentation + 1, 1)
+
+			lg.write('\n')
 
-        # TODO: Refactorize
-        self.node_map = []
-        for row in self.base:
-            self.node_map.extend(row)
 
-        self.verbose = verbose
+	def set_gradient(self, total_explored_nodes: int):
+		self.r_diff = (self.end_color[0] - self.start_color[0]) / total_explored_nodes
+		self.g_diff = (self.end_color[1] - self.start_color[1]) / total_explored_nodes
+		self.b_diff = (self.end_color[2] - self.start_color[2]) / total_explored_nodes
 
-        self.log(f"Start: {self.start}")
 
-        self.log(["Node map:"] + [row for row in self.base])
+	def increment_gradient(self) -> None:
+		self.explored_color = (
+			self.explored_color[0] + self.r_diff,
+			self.explored_color[1] + self.g_diff,
+			self.explored_color[2] + self.b_diff
+		)
 
 
-    def log(self, argument, hierarchy = 0, plain = False):
-        """Visual log implementation for debugging."""
+	def set_node_color(self, explored_nodes: int):
+		for node in explored_nodes:
+			self.increment_gradient()
+			node.color = (
+				round(self.explored_color[0]),
+				round(self.explored_color[1]),
+				round(self.explored_color[2])
+			)
 
-        if self.verbose:
-            if plain:
-                print(argument)
 
-            else:
-                if isinstance(argument, str):
-                    title = f"{datetime.now().isoformat()} -> {argument}"
-                    print(title.rjust(len(title) + 1 + 4 * hierarchy, '-'))
+	def next_nodes(self, node: Node) -> list:
+		"""Gets the nodes immediately next to the given coordinates from
+		'self.base'.
 
-                elif isinstance(argument, list):
-                    title = f"{datetime.now().isoformat()} -> {argument[0]}"
-                    print(title.rjust(len(title) + 1 + 4 * hierarchy, '-'))
+		The order in which the surrounding nodes are returned is set in a
+		random way, in order to prevent data pre-setting.
 
-                    for element in argument[1:]:
-                        subtitle = f"{element}"
-                        print(subtitle.rjust(len(subtitle) + 1 + 4 * (hierarchy + 1), '-'))
+		Process illustration:
+		---------------------
 
-            print()
+				T
+			L   X   R
+				B
+		"""
 
+		coordinates = (
+			(node.X, node.Y - 1),  # Top
+			(node.X + 1, node.Y),  # Right
+			(node.X, node.Y + 1),  # Bottom
+			(node.X - 1, node.Y)   # Left
+		)
 
-    def next_nodes(self, node: Node, hierarchy = 1) -> list:
-        """Gets the nodes immediately next to the given coordinates from
-        'self.base'.
+		self.log(f"[NEXT_NODES] Next coordinates for node {node}:", coordinates, indentation=1, expand=False)
 
-        The order in which the surrounding nodes are returned is set in a
-        random way, in order to prevent data pre-setting.
+		nodes = [
+			self.base[coord[1]][coord[0]] for coord in coordinates
+			if 0 <= coord[0] < self.X and 0 <= coord[1] < self.Y
+		]
+		nodes = sample(nodes, len(nodes))
 
-        Process illustration:
-        ---------------------
+		self.log(f"[NEXT_NODES] Next nodes for node {node}:", nodes, indentation=2)
 
-                T
-            L   X   R
-                B
-        """
+		return nodes
 
-        coordinates = (
-            (node.X, node.Y - 1),  # Top
-            (node.X + 1, node.Y),  # Right
-            (node.X, node.Y + 1),  # Bottom
-            (node.X - 1, node.Y)   # Left
-        )
 
-        self.log([f"[NEXT_NODES] (Node: {node}) Coordinates:", coordinates], hierarchy=hierarchy)
+	def surrounding_nodes(self, node: Node) -> list:
+		"""Gets the values in the square surroundings of the given coordinates.
+		This method is used in order to prevent path mixing during generation.
 
-        nodes = [
-            self.base[coord[1]][coord[0]] for coord in coordinates
-            if 0 <= coord[0] < self.X and 0 <= coord[1] < self.Y
-        ]
+		Since the method is only used to evaluate the amount of nearby 'path'
+		values near the considered node during path generation, there is no
+		point in returning a randomized sample.
 
-        self.log([f"[NEXT_NODES] (Node: {node}) Nodes:", nodes], hierarchy=hierarchy + 1)
+		Process illustration:
+		---------------------
 
-        return sample(nodes, len(nodes))
+			TL  TC  TR
+			ML  XX  MR
+			BL  BC  BR
+		"""
 
+		coordinates = (
+			(node.X - 1, node.Y - 1),  # Top left
+			(node.X, node.Y - 1),	  # Top center
+			(node.X + 1, node.Y - 1),  # Top right
+			(node.X + 1, node.Y),	  # Middle right
+			(node.X + 1, node.Y + 1),  # Bottom right
+			(node.X, node.Y + 1),	  # Bottom center
+			(node.X - 1, node.Y + 1),  # Bottom left
+			(node.X - 1, node.Y)	   # Middle left
+		)
 
-    def surrounding_nodes(self, node: Node, hierarchy = 1) -> list:
-        """Gets the values in the square surroundings of the given coordinates.
-        This method is used in order to prevent path mixing during generation.
+		self.log(f"[SURROUNDING NODES] Surrounding coordinates for node {node}:", coordinates, indentation=1, expand=False)
 
-        Since the method is only used to evaluate the amount of nearby 'path'
-        values near the considered node during path generation, there is no
-        point in returning a randomized sample.
+		nodes = [
+			self.base[coord[1]][coord[0]] for coord in coordinates
+			if 0 <= coord[0] < self.X and 0 <= coord[1] < self.Y
+		]
 
-        Process illustration:
-        ---------------------
+		self.log(f"[SURROUNDING NODES] Surrounding nodes for node {node}: ", nodes, indentation=2)
 
-            TL  TC  TR
-            ML  XX  MR
-            BL  BC  BR
-        """
+		return nodes
 
-        coordinates = (
-            (node.X - 1, node.Y - 1),  # Top left
-            (node.X, node.Y - 1),      # Top center
-            (node.X + 1, node.Y - 1),  # Top right
-            (node.X + 1, node.Y),      # Middle right
-            (node.X + 1, node.Y + 1),  # Bottom right
-            (node.X, node.Y + 1),      # Bottom center
-            (node.X - 1, node.Y + 1),  # Bottom left
-            (node.X - 1, node.Y)       # Middle left
-        )
 
-        self.log([f"[SURROUNDING_NODES] (Node: {node}) Coordinates:", coordinates], hierarchy=hierarchy)
+	def clear_explored_nodes(self) -> None:
+		for node in self.node_map:
+			if node.state == 2:
+				node.state = 1
+				node.color = self.path_color
 
-        nodes = [
-            self.base[coord[1]][coord[0]] for coord in coordinates
-            if 0 <= coord[0] < self.X and 0 <= coord[1] < self.Y
-        ]
+		self.explored_color = self.start_color
 
-        self.log([f"[SURROUNDING_NODES] (Node: {node}) Nodes:", nodes], hierarchy=hierarchy + 1)
 
-        return nodes
+	def caesar(self, nodes: list) -> list:
+		"""Random path divergence generator. Takes one or multiple path
+		divergence possibilities and selects at least one of them.
 
+		The name is due to the 'lives, dies' choice of Julius Caesar during
+		colosseum gladiator games.
+		"""
+		self.log("[CAESAR] Unfiltered:", nodes, indentation=1)
 
-    def caesar(self, nodes, bias=0):
-        """Random path divergence generator. Takes one or multiple path
-        divergence possibilities and selects at least one of them.
+		bias = round(max(self.X, self.Y) * (1 / 4))
+		chance = randint(bias if bias <= len(nodes) else len(nodes), len(nodes))
+		nodes = sample(nodes, chance if 0 <= chance <= len(nodes) else .66 * len(nodes))
 
-        The name is due to the 'lives, dies' choice of Julius Caesar during
-        colosseum gladiator games.
-        """
+		self.log("[CAESAR] Filtered:", nodes, indentation=2)
 
-        chance = randint(bias if bias <= len(nodes) else len(nodes), len(nodes))
-        return sample(nodes, chance if 0 <= chance <= len(nodes) else 0)
+		return nodes
 
 
-    def goal_spreader(self) -> None:
-        """Sets the position of the goal state at the farthest possible
-        coordinate in the array.
-        """
+	def goal_spreader(self) -> None:
+		"""Sets the position of the goal state at the farthest possible
+		coordinate in the array.
+		"""
 
-        path_tiles = [node for node in self.node_map if node.state == 1]
+		path_tiles = [node for node in self.node_map if node.state == 1]
 
-        self.log(["[GOAL_SPREADER] Elements:", path_tiles], hierarchy=2)
+		self.log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
 
-        self.end = path_tiles[0]
-        top_distance = self.manhattan(self.end, path_tiles[0])
+		self.end = path_tiles[0]
+		top_distance = self.manhattan(self.end, path_tiles[0])
 
-        for tile in path_tiles:
-            if self.manhattan(self.start, tile) > top_distance:
-                top_distance = self.manhattan(self.start, tile)
-                self.end = tile
+		for tile in path_tiles:
+			if self.manhattan(self.start, tile) > top_distance:
+				top_distance = self.manhattan(self.start, tile)
+				self.end = tile
 
-        self.end.state = 10
+		self.end.state = 10
+		self.end.color = self.end_color
 
-        self.log(["[GOAL_SPREADER] Selected goal:", self.end], hierarchy=3)
+		self.log("[GOAL SPREADER] Selected goal:", self.end, indentation=2)
 
 
-    def path_generator(self, bias=5):
-        """Randomly generates a pathway for the array."""
+	def path_generator(self, bias=5) -> None:
+		"""Randomly generates a pathway for the array."""
 
-        timer_start = time()
-        frontier = [self.start]
+		self.log("Start:", self.start)
+		timer_start = time()
 
-        self.log(["[PATH_GENERATOR] Frontier:", frontier])
+		frontier = [self.start]
 
-        while frontier != []:
-            self.log("[PATH_GENERATOR] Beginning iteration:")
+		self.log("[PATH GENERATOR] Frontier:", frontier)
 
-            selected_nodes, candidates = [], []
+		while frontier != []:
+			self.log("[PATH GENERATOR] Beginning iteration...")
 
-            for index, node in enumerate(frontier):
-                candidates.extend(
-                    [neighbor for neighbor in self.next_nodes(node, hierarchy=1)
-                    if neighbor.state not in (-10, 1)]
-                )
+			selected_nodes, candidates = [], []
 
-            self.log(["[PATH_GENERATOR] Candidates:", candidates], hierarchy=1)
+			for index, node in enumerate(frontier):
+				candidates.extend(
+					[neighbor for neighbor in self.next_nodes(node)
+					if neighbor.state not in (-10, 1)]
+				)
 
-            selected_nodes = [
-                candidate for candidate in candidates if len([
-                    node for node in self.surrounding_nodes(candidate)
-                    if self.base[node.Y][node.X].state in (-10, 1)
-                ]) < 3
-            ]
+			self.log("[PATH GENERATOR] Candidates:", candidates)
 
-            self.log(["[PATH_GENERATOR] Selected nodes (pre-caesar):", selected_nodes], hierarchy=1)
+			selected_nodes = self.caesar([
+				candidate for candidate in candidates if len([
+					node for node in self.surrounding_nodes(candidate)
+					if self.base[node.Y][node.X].state in (-10, 1)
+				]) <= 2
+			])
 
-            selected_nodes = self.caesar(selected_nodes, bias=int(log(self.X ** self.Y) ** (1 / bias)))
+			frontier = selected_nodes
+			for node in frontier:
+				node.state = 1
+				node.color = self.path_color
 
-            self.log(["[PATH_GENERATOR] Selected nodes (post-caesar):", selected_nodes], hierarchy=1)
+			self.log("[PATH GENERATOR] Frontier:", frontier)
+			self.log(f"Display:\n{str(self)}", indentation=1)
 
-            frontier = selected_nodes
-            for node in frontier:
-                node.state = 1
+		self.log("[PATH GENERATOR] Node map:", self.node_map)
 
-            self.log(["[PATH_GENERATOR] Frontier:", frontier], hierarchy=1)
+		self.goal_spreader()
 
-            self.log(self, plain=True)
+		timer_end = time()
+		self.log("[PATH GENERATOR] Generation time:", f"{(timer_end - timer_start):.5f}s.")
+		self.log(f"Display:\n{str(self)}", indentation=1)
 
-        self.goal_spreader()
 
-        timer_end = time()
+	@staticmethod
+	def manhattan(node_1: Node, node_2: Node) -> int:
+		"""Returns the manhattan distance between two nodes (sum of the
+		absolute cartesian coordinates difference between a selected node and
+		the goal node).
+		"""
 
-        print(f"Array generated correctly. Time elapsed: {(timer_end - timer_start):.4f} seconds.")
+		return abs(node_1.X - node_2.X) + abs(node_1.Y - node_2.Y)
 
-        self.log(self, plain=True)
 
+	def dfs(self) -> [bool, list]:
+		"""Depth-First Search (DFS)."""
 
-    @staticmethod
-    def manhattan(node_1: Node, node_2: Node):
-        """Returns the manhattan distance between two nodes (sum of the
-        absolute cartesian coordinates difference between a selected node and
-        the goal node).
-        """
+		if self.is_explored:
+			self.clear_explored_nodes()
 
-        return abs(node_1.X - node_2.X) + abs(node_1.Y - node_2.Y)
+		self.distances = {
+			node.coordinates: self.manhattan(node, self.end)
+			for node in self.node_map if node.state == 1
+		}
 
+		timer_start = time()
 
-    def dfs(self):
-        """Depth-First Search (DFS)."""
+		frontier, explored = self.next_nodes(self.start), []
 
-        # self.distances = dict()
-        # for row in range(self.Y):
-        #     for column in range(self.X):
-        #         if self.base[row][column] == 1:
-        #             self.distances[(row, column)] = self.manhattan((row, column))
+		while len(frontier) >= 1:
+			node = frontier.pop()
+			explored.append(node)
+			node.state = 2 if node.state != -10 else -10
 
-        self.distances = {
-            node.coordinates: self.manhattan(node, self.end) for node in self.node_map
-            if node.state == 1
-        }
+			for neighbor in self.next_nodes(node):
+				if neighbor.state == 1:
+					frontier.append(neighbor)
 
-        timer_start = time()
+				elif neighbor.state == 10:
+					timer_end = time()
+					self.log("[DFS] Search time:", f"{(timer_end - timer_start):.5}s.")
 
-        frontier, explored = self.next_nodes(self.start), []
+					self.set_gradient(len(explored))
+					self.set_node_color(explored)
+					self.is_explored = True
 
-        while len(frontier) >= 1:
-            node = frontier.pop()
+					return True
 
-            if node.state not in (-10, 10):
-                node.state = 2
-                explored.append(node)# if node not in explored else None # TODO: remove this?
+		self.set_gradient(len(explored))
+		self.set_node_color(explored)
+		self.is_explored = True
 
-                for neighbor in self.next_nodes(node):
-                    if neighbor.state == 1:
-                        frontier.append(neighbor)# if neighbor not in frontier else None # TODO: remove this?
+		return False
 
-                    elif neighbor.state == 10:
-                        timer_end = time()
-                        print(f"Array searched correctly. Time elapsed: {(timer_end - timer_start):.4}s.")
 
-                        return True, explored
-        return False, explored
+	def gbfs(self) -> [bool, list]:
+		"""Greedy Best-First Search (GBFS)."""
 
+		if self.is_explored:
+			self.clear_explored_nodes()
 
-    def gbfs(self):
-        """Greedy Best-First Search (GBFS)."""
+		self.distances = {
+			node.coordinates: self.manhattan(node, self.end) for node in self.node_map
+			if node.state == 1
+		}
 
-        self.distances = {
-            node.coordinates: self.manhattan(node, self.end) for node in self.node_map
-            if node.state == 1
-        }
+		timer_start = time()
 
-        timer_start = time()
+		frontier, explored = [Unnamed(0, self.start)], []
 
-        frontier, explored = [Unnamed(0, self.start)], []
+		while len(frontier) >= 1:
 
-        while len(frontier) >= 1:
+			self.log("[GBFS] Beginning iteration...")
 
-            self.log("[GBFS] Beginning iteration:")
+			self.log("[GBFS] Frontier:", frontier)
 
-            self.log(["[GBFS] Frontier:", frontier])
+			node = frontier.pop().secondary
+			explored.append(node)
+			node.state = 2 if node.state != -10 else -10
 
-            node = frontier.pop().secondary
-            node.state = 2 if node.state != -10 else -10
-            explored.append(node)
+			self.log("[GBFS] Selected node:", node)
 
-            self.log(["[GBFS] Selected node:", node])
+			self.log(f"Display:\n{str(self)}", indentation=1)
 
-            self.log(self, plain=True)
+			candidates = [node for node in self.next_nodes(node) if node.state in (1, 10)]
 
-            candidates = [node for node in self.next_nodes(node) if node.state in (1, 10)]
+			if any(candidate.coordinates == self.end.coordinates for candidate in candidates):
+				self.log("[GBFS] End node:", self.end)
+				timer_end = time()
+				self.log("[GBFS] Search time:", f"{(timer_end - timer_start):.5f}s.")
 
-            if any(candidate.coordinates == self.end.coordinates for candidate in candidates):
-                self.log(["[GBFS] End node:", self.end])
-                timer_end = time()
-                print(f"Array searched correctly. Time elapsed: {(timer_end - timer_start):.6f} seconds.")
-                return True, explored
+				self.set_gradient(len(explored))
+				self.set_node_color(explored)
+				self.is_explored = True
 
-            self.log(["[GBFS] Candidates:", candidates], hierarchy=1)
+				return True
 
-            weights = [Unnamed(self.distances[candidate.coordinates], candidate) for candidate in candidates]
+			self.log("[GBFS] Candidates:", candidates, indentation=1)
 
-            self.log(["[GBFS] Weight list:", weights], hierarchy=1)
+			weights = [Unnamed(self.distances[candidate.coordinates], candidate) for candidate in candidates]
 
-            frontier.extend(weights)
-            frontier = sorted(frontier, reverse=True)
+			self.log("[GBFS] Weight list:", weights, indentation=1)
 
-        self.log(["[GBFS] End node:", self.end])
+			frontier.extend(weights)
+			frontier = sorted(frontier, reverse=True)
 
-        return False, explored
+		self.log("[GBFS] End node:", self.end)
 
+		self.set_gradient(len(explored))
+		self.set_node_color(explored)
+		self.is_explored = True
 
-    def __repr__(self):
-        visual = {0: '█ ', 1: '  ', 2: '░ ',
-                  3: '≡ ', -10: 'A ', 10: 'B '}
+		return False
 
-        return (
-            f"╔═{2 * '═' * self.X}╗\n"
-            + ''.join(
-                ''.join(
-                    ['║ ' + ''.join(
-                        [visual[element.state] for element in row]
-                    ) + '║\n']
-                ) for row in self.base
-            ) + f"╚═{2 * '═' * self.X}╝"
-            )
 
+	def ascii(self) -> str:
+		ascii_map = {
+			-10: 'A ',  # Start
+			0: '█ ',	# Wall
+			1: '  ',	# Path
+			2: '░ ',	# Explored
+			10: 'B '	# End
+		}
 
-    def display(self):
+		return (
+			f"╔═{2 * '═' * self.X}╗\n"
+				+ ''.join(
+					''.join(
+						['║ ' + ''.join(
+							[ascii_map[node.state] for node in row]
+						) + '║\n']
+					) for row in self.base
+				) + f"╚═{2 * '═' * self.X}╝"
+			)
 
-        # Dimensions:
-        cell = 50
-        border = 2
 
-        # Canvas:
-        img = Image.new(
-            mode="RGBA",
-            size=(self.DIMENSIONS[1] * cell, self.DIMENSIONS[0] * cell),
-            color="black"
-        )
+	def image(self, show_image=True, save_image=False) -> None:
 
-        draw = ImageDraw.Draw(img)
+		# Dimensions and canvas definition:
+		cell, border = 50, 4
 
-        for i, row in enumerate(self.base):
-            for j, column in enumerate(row):
+		img = Image.new(
+			mode="RGB", size=(self.Y * cell, self.X * cell), color="black"
+		)
 
-                # Walls
-                if column.state == 0:
-                    fill = (40, 40, 40)
+		# Canvas modification:
+		draw = ImageDraw.Draw(img)
 
-                # Start
-                elif column.state == -10:
-                    fill = (50, 171, 28)
+		for ri, row in enumerate(self.base):
+			for ci, node in enumerate(row):
+				draw.rectangle(
+					([(ci * cell + border, ri * cell + border),
+					((ci + 1) * cell - border, (ri + 1) * cell - border)]),
+					fill=node.color
+				)
 
-                # Goal
-                elif column.state == 10:
-                    fill = (255, 0, 0)
+		if save_image:
+			DIRECTORY = "images"
+			PREFIX = "maze"
+			FILE = f"./{DIRECTORY}/{PREFIX}_{str(time()).split('.')[0]}"
 
-                # Explored
-                elif column.state == 2:
-                    fill = (212, 97, 85)
+			if not path.isdir(f"./{DIRECTORY}"):
+				mkdir(f"./{DIRECTORY}")
 
-                # Empty cell
-                else:
-                    fill = (237, 240, 252)
+			img.save(f"{FILE}.png")
 
-                # Draw cell
-                draw.rectangle(
-                    ([(j * cell + border, i * cell + border),
-                      ((j + 1) * cell - border, (i + 1) * cell - border)]),
-                    fill=fill
-                )
+		if show_image:
+			img.show()
 
-        img.show()
 
+	def __repr__(self):
+		return f"({self.X}x{self.Y}) {self.__class__} instance"
