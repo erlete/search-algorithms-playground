@@ -319,7 +319,15 @@ class Maze:
 		return abs(node_1.X - node_2.X) + abs(node_1.Y - node_2.Y)
 
 
-	def dfs(self) -> [bool, list]:
+	@staticmethod
+	def radial(node_1: Node, node_2: Node) -> float:
+		"""Returns the radial distance between two nodes (square root of the
+		sum of each node's coordinates squared).
+		"""
+		return ((node_1.X - node_2.X) ** 2 + (node_1.Y - node_2.Y) ** 2) ** .5
+
+
+	def dfs(self) -> bool:
 		"""Depth-First Search (DFS)."""
 
 		if self.is_explored:
@@ -355,7 +363,7 @@ class Maze:
 		return False
 
 
-	def gbfs(self) -> [bool, list]:
+	def gbfs(self) -> bool:
 		"""Greedy Best-First Search (GBFS)."""
 
 		if self.is_explored:
@@ -411,6 +419,70 @@ class Maze:
 			frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
 
 		self.log("[GBFS] End node:", self.end)
+
+		self.set_gradient(len(explored))
+		self.set_node_color(explored)
+		self.is_explored = True
+
+		return False
+
+
+	def rs(self) -> bool:
+		"""Radial Search (GBFS)."""
+
+		if self.is_explored:
+			self.clear_explored_nodes()
+
+		for node in self.node_map:
+			node.weight = self.radial(node, self.end)
+
+		timer_start = time()
+
+		frontier, explored = [self.start], []
+
+		while len(frontier) >= 1:
+
+			self.log("[RS] Beginning iteration...")
+
+			self.log(
+				"[RS] Frontier:",
+				[f"({node} :: {node.weight})" for node in frontier],
+				indentation=1
+			)
+
+			node = frontier.pop()
+			explored.append(node)
+			node.state = 2 if node.state != -10 else -10
+
+			self.log("[RS] Selected node:", node)
+
+			self.log(f"Display:\n{str(self)}", indentation=1)
+
+			candidates = [node for node in self.next_nodes(node) if node.state in (1, 10)]
+
+			if any(candidate.coordinates == self.end.coordinates for candidate in candidates):
+				self.log("[RS] End node:", self.end)
+				timer_end = time()
+				self.log("[RS] Search time:", f"{(timer_end - timer_start):.5f}s.")
+
+				self.set_gradient(len(explored))
+				self.set_node_color(explored)
+				self.is_explored = True
+
+				return True
+
+			self.log("[RS] Candidates:", candidates, indentation=1)
+
+			self.log(
+				"[RS] Weight list:",
+				[f"({node} :: {node.weight})" for node in candidates],
+				indentation=1
+			)
+
+			frontier.extend(candidates)
+			frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
+
+		self.log("[RS] End node:", self.end)
 
 		self.set_gradient(len(explored))
 		self.set_node_color(explored)
