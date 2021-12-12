@@ -81,8 +81,8 @@ Once the maze has been generated (and searched, optionally), it can be displayed
 
 ## Examples
 
-[Base](https://github.com/search-algorithms/readme_content/images/0_base.png)
+![Base](https://github.com/erlete/search-algorithms/tree/main/readme_content/images/0_base.png)
 
-[DFS](https://github.com/search-algorithms/readme_content/images/1_dfs.png)
+![DFS](https://github.com/erlete/search-algorithms/tree/main/readme_content/images/1_dfs.png)
 
-[GBFS](https://github.com/search-algorithms/readme_content/images/2_gbfs.png)
+![GBFS](https://github.com/erlete/search-algorithms/tree/main/readme_content/images/2_gbfs.png)
