@@ -9,73 +9,16 @@ from os import mkdir, path
 from time import time
 
 
-class Unnamed:
-	def __init__(self, primary, secondary):
-		self.primary = primary
-		self.secondary = secondary
-
-
-	def __eq__(self, element):
-		if isinstance(element, Unnamed):
-			return self.primary == element.primary
-		raise Exception(
-			f"Can't compare <class 'Unnamed'> with {type(element)}."
-			)
-
-
-	def __gt__(self, element):
-		if isinstance(element, Unnamed):
-			return self.primary > element.primary
-		raise Exception(
-			f"Can't compare <class 'Unnamed'> with {type(element)}."
-			)
-
-
-	def __lt__(self, element):
-		if isinstance(element, Unnamed):
-			return self.primary < element.primary
-		raise Exception(
-			f"Can't compare <class 'Unnamed'> with {type(element)}."
-			)
-
-
-	def __repr__(self):
-		return f"(P: {self.primary}, S: {self.secondary})"
-
-
 class Node:
-	def __init__(self, x: int, y: int, state=0, color=(0, 0, 0)):
+	def __init__(self, x: int, y: int, state=0, weight=0, color=(0, 0, 0)):
 		# Spatial attributes:
 		self.X, self.Y = x, y
 		self.coordinates = (x, y)
 
 		# Qualitative attributes:
+		self.weight = weight
 		self.state = state
 		self.color = color
-
-
-	def __eq__(self, element):
-		if isinstance(element, Node):
-			return self.X + self.Y == element.X + element.Y
-		raise Exception(
-			f"Can't compare <class 'Node'> with {type(element)}."
-			)
-
-
-	def __gt__(self, element):
-		if isinstance(element, Node):
-			return self.X + self.Y > element.X + element.Y
-		raise Exception(
-			f"Can't compare <class 'Node'> with {type(element)}."
-			)
-
-
-	def __lt__(self, element):
-		if isinstance(element, Node):
-			return self.X + self.Y < element.X + element.Y
-		raise Exception(
-			f"Can't compare <class 'Node'> with {type(element)}."
-			)
 
 
 	def __repr__(self):
@@ -173,7 +116,7 @@ class Maze:
 			lg.write('\n')
 
 
-	def set_gradient(self, total_explored_nodes: int):
+	def set_gradient(self, total_explored_nodes: int) -> None:
 		self.r_diff = (self.end_color[0] - self.start_color[0]) / total_explored_nodes
 		self.g_diff = (self.end_color[1] - self.start_color[1]) / total_explored_nodes
 		self.b_diff = (self.end_color[2] - self.start_color[2]) / total_explored_nodes
@@ -371,10 +314,8 @@ class Maze:
 	@staticmethod
 	def manhattan(node_1: Node, node_2: Node) -> int:
 		"""Returns the manhattan distance between two nodes (sum of the
-		absolute cartesian coordinates difference between a selected node and
-		the goal node).
+		absolute cartesian coordinates difference between two nodes).
 		"""
-
 		return abs(node_1.X - node_2.X) + abs(node_1.Y - node_2.Y)
 
 
@@ -383,11 +324,6 @@ class Maze:
 
 		if self.is_explored:
 			self.clear_explored_nodes()
-
-		self.distances = {
-			node.coordinates: self.manhattan(node, self.end)
-			for node in self.node_map if node.state == 1
-		}
 
 		timer_start = time()
 
@@ -425,22 +361,24 @@ class Maze:
 		if self.is_explored:
 			self.clear_explored_nodes()
 
-		self.distances = {
-			node.coordinates: self.manhattan(node, self.end) for node in self.node_map
-			if node.state == 1
-		}
+		for node in self.node_map:
+			node.weight = self.manhattan(node, self.end)
 
 		timer_start = time()
 
-		frontier, explored = [Unnamed(0, self.start)], []
+		frontier, explored = [self.start], []
 
 		while len(frontier) >= 1:
 
 			self.log("[GBFS] Beginning iteration...")
 
-			self.log("[GBFS] Frontier:", frontier)
+			self.log(
+				"[GBFS] Frontier:",
+				[f"({node} :: {node.weight})" for node in frontier],
+				indentation=1
+			)
 
-			node = frontier.pop().secondary
+			node = frontier.pop()
 			explored.append(node)
 			node.state = 2 if node.state != -10 else -10
 
@@ -463,12 +401,14 @@ class Maze:
 
 			self.log("[GBFS] Candidates:", candidates, indentation=1)
 
-			weights = [Unnamed(self.distances[candidate.coordinates], candidate) for candidate in candidates]
+			self.log(
+				"[GBFS] Weight list:",
+				[f"({node} :: {node.weight})" for node in candidates],
+				indentation=1
+			)
 
-			self.log("[GBFS] Weight list:", weights, indentation=1)
-
-			frontier.extend(weights)
-			frontier = sorted(frontier, reverse=True)
+			frontier.extend(candidates)
+			frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
 
 		self.log("[GBFS] End node:", self.end)
 
