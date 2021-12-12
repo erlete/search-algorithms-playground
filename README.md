@@ -81,8 +81,18 @@ Once the maze has been generated (and searched, optionally), it can be displayed
 
 ## Examples
 
-![](readme_content/images/0_base.png width=100)
+### Base maze
 
-![](readme_content/images/1_dfs.png width=100)
+![](readme_content/images/0_base.png)
 
-![](readme_content/images/2_gbfs.png width=100)
+***
+
+### Searched maze (DFS)
+
+![](readme_content/images/1_dfs.png)
+
+***
+
+### Searched maze (GBFS)
+
+![](readme_content/images/2_gbfs.png)
