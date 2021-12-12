@@ -71,7 +71,7 @@ Primitive algorithms do not usually consider other factors apart from the exista
 
 This might be the most basic algorithm that can be developed. When given a node as a frontier, it checks for surrounding nodes and selects one of them. When reaching that next node, it repeats the process until it reaches and endpoint (which might be the solution or the complete exhaustion of path nodes in the maze) without taking into account any biasing factors.
 
-#### Greedy Best-First Search (DFS)
+#### Greedy Best-First Search (GBFS)
 
 Opposite to the DFS, the GBFS takes into account the **manhattan distance** (sum of cartesian coordinates' difference) from each evaluated node to the `end` (which equals the _weight_ of said node). This guarantees that the algorithm always selects nodes that are closer to the `end` node, since the selected node will have the lowest weight of the frontier array.
 
