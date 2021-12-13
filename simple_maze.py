@@ -1,6 +1,7 @@
 from random import randint, randrange, sample
 from time import time
 from datetime import datetime
+from os import path, mkdir
 
 
 class Node:
@@ -24,17 +25,6 @@ class Node:
 
 
 class Maze:
-	"""This class generates a blank array of (m x n) dimensions, made of '0'
-	values, stored in the 'Base' attribute.
-
-	Given that array, an algorithm generates a 'path', made out of '1' values,
-	which later on can be evaluated by a search algorithm in order to explore
-	the path. Explored nodes have a numerical value of '2'.
-
-	The initial and goal states are represented by '-10' and '10' values,
-	respectively.
-	"""
-
 	def __init__(self, dimensions=(10, 10), logger=False):
 		if not isinstance(dimensions, tuple):
 			raise Exception("Dimensions must be a 2-tuple.")
@@ -65,16 +55,18 @@ class Maze:
 
 		# Logger settings:
 		self.logger = logger
-		self.LOG_FILE = f"log{int(time())}.txt"
-		self.PREFIX = datetime.now().isoformat()
-		self.SEPARATOR = '-'
+		self.LOG_DIRECTORY = "logs"
+		self.LOG_PREFIX = "log"
+		self.LOG_SEPARATOR = '-'
+		self.LOG_FILE = f"./{self.LOG_DIRECTORY}/{self.LOG_PREFIX}_" +\
+			f"{''.join(str(time()).split('.'))}.txt"
 
 
 	def writer(self, file: str, argument, indentation: int, newlines: int):
 		header = f"+ {datetime.now().isoformat()} "
 		file.write(
 			header.ljust(
-				len(header) + 4 * (indentation + 1), self.SEPARATOR
+				len(header) + 4 * (indentation + 1), self.LOG_SEPARATOR
 			) + f" {argument}" + newlines * '\n'
 		)
 
@@ -82,6 +74,9 @@ class Maze:
 	def log(self, *arguments, indentation=0, expand=True):
 		if not self.logger:
 			return None
+
+		if not path.isdir(f"./{self.LOG_DIRECTORY}"):
+			mkdir(f"./{self.LOG_DIRECTORY}")
 
 		with open(self.LOG_FILE, mode='a') as lg:
 			if len(arguments) >= 1:
@@ -99,20 +94,6 @@ class Maze:
 
 
 	def next_nodes(self, node: Node) -> list:
-		"""Gets the nodes immediately next to the given coordinates from
-		'self.base'.
-
-		The order in which the surrounding nodes are returned is set in a
-		random way, in order to prevent data pre-setting.
-
-		Process illustration:
-		---------------------
-
-				T
-			L   X   R
-				B
-		"""
-
 		coordinates = (
 			(node.X, node.Y - 1),  # Top
 			(node.X + 1, node.Y),  # Right
@@ -134,21 +115,6 @@ class Maze:
 
 
 	def surrounding_nodes(self, node: Node) -> list:
-		"""Gets the values in the square surroundings of the given coordinates.
-		This method is used in order to prevent path mixing during generation.
-
-		Since the method is only used to evaluate the amount of nearby 'path'
-		values near the considered node during path generation, there is no
-		point in returning a randomized sample.
-
-		Process illustration:
-		---------------------
-
-			TL  TC  TR
-			ML  XX  MR
-			BL  BC  BR
-		"""
-
 		coordinates = (
 			(node.X - 1, node.Y - 1),  # Top left
 			(node.X, node.Y - 1),	  # Top center
@@ -182,12 +148,6 @@ class Maze:
 
 
 	def caesar(self, nodes: list) -> list:
-		"""Random path divergence generator. Takes one or multiple path
-		divergence possibilities and selects at least one of them.
-
-		The name is due to the 'lives, dies' choice of Julius Caesar during
-		colosseum gladiator games.
-		"""
 		self.log("[CAESAR] Unfiltered:", nodes, indentation=1)
 
 		bias = round(max(self.X, self.Y) * (1 / 4))
@@ -200,10 +160,6 @@ class Maze:
 
 
 	def goal_spreader(self) -> None:
-		"""Sets the position of the goal state at the farthest possible
-		coordinate in the array.
-		"""
-
 		path_tiles = [node for node in self.node_map if node.state == 1]
 
 		self.log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
@@ -222,8 +178,6 @@ class Maze:
 
 
 	def path_generator(self, bias=5) -> None:
-		"""Randomly generates a pathway for the array."""
-
 		self.log("Start:", self.start)
 		timer_start = time()
 
@@ -269,15 +223,10 @@ class Maze:
 
 	@staticmethod
 	def manhattan(node_1: Node, node_2: Node) -> int:
-		"""Returns the manhattan distance between two nodes (sum of the
-		absolute cartesian coordinates difference between two nodes).
-		"""
 		return abs(node_1.X - node_2.X) + abs(node_1.Y - node_2.Y)
 
 
 	def gbfs(self) -> bool:
-		"""Greedy Best-First Search (GBFS)."""
-
 		if self.is_explored:
 			self.clear_explored_nodes()
 
