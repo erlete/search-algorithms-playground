@@ -7,108 +7,119 @@ print(f"Done ({(time() - timer):.5}s).\n")
 
 # Variable settings:
 
-try:
-	start = int(input("[Starting size] Input an integer value greater than 2: "))
-	assert start > 2
-except Exception:
-	print("Switching to default value...")
-	start = DEFAULTS["start"]
+class Interface:
+	def __init__(self):
+		self.start = self.set_attribute("start", lower_bound=2)
+		self.cycles = self.set_attribute("cycles")
+		self.constant = self.set_attribute("constant", is_bool=True)
+		self.show_image = self.set_attribute("show_image", is_bool=True)
+		self.save_image = self.set_attribute("save_image", is_bool=True)
+		self.logger = self.set_attribute("logger", is_bool=True)
 
-try:
-	cycles = int(input("[Total cycles] Input a positive integer value: "))
-	assert cycles > 0
-except Exception:
-	print("Switching to default value...")
-	cycles = DEFAULTS["cycles"]
+		self.global_command = False
 
-try:
-	ratio = int(input("[Ideal ratio] Input a float value greater than 2: "))
-	assert ratio > 0
-except Exception:
-	print("Switching to default value...")
-	ratio = DEFAULTS["ratio"]
+		timer = time()
+		print("\nGenerating objects...")
 
-try:
-	constant = bool(int(input("Should the size of the array remain constant? (1/0) ")))
-except Exception:
-	print("Switching to default value...")
-	ratio = DEFAULTS["constant"]
+		self.object = Inspector(cycles=self.cycles, start=self.start,
+			constant=self.constant, logger=self.logger)
 
-try:
-	show_image = bool(int(input("Should images be shown? (1/0) ")))
-except Exception:
-	print("Switching to default value...")
-	ratio = DEFAULTS["show_image"]
+		print(f"Done ({(time() - timer):.5}s).\n")
 
-try:
-	save_image = bool(int(input("Should images be saved? (1/0) ")))
-except Exception:
-	print("Switching to default value...")
-	ratio = DEFAULTS["save_image"]
+		timer = time()
+		print("Performing initial benchmark...")
 
-try:
-	logger = bool(int(input("Should the process be logged? (1/0) ")))
-except Exception:
-	print("Switching to default value...")
-	ratio = DEFAULTS["logger"]
+		self.object.benchmark()
+
+		print(f"Done ({(time() - timer):.5}s).\n")
 
 
-# Main object and helper functions' definition:
-
-timer = time()
-print("\nGenerating objects...")
-obj = Inspector(cycles=cycles, start=start, constant=constant, ratio=ratio,
-	logger=logger)
-print(f"Done ({(time() - timer):.5}s).\n")
-
-timer = time()
-print("Performing initial benchmark...")
-obj.benchmark()
-print(f"Done ({(time() - timer):.5}s).\n")
-
-high = lambda: obj.display(max(obj.mazes, key=lambda x: x["ratio"]))
-low = lambda: obj.display(min(obj.mazes, key=lambda x: x["ratio"]))
-
-def dfs_handler(obj=obj):
-	try:
-		index = int(input("Input an index: "))
-		obj.mazes[index]["maze"].dfs()
-	except Exception:
-		print("[ERROR]: Invalid index. Returning to menu...")
-
-def gbfs_handler(obj=obj):
-	try:
-		index = int(input("Input an index: "))
-		obj.mazes[index]["maze"].gbfs()
-	except Exception:
-		print("[ERROR]: Invalid index. Returning to menu...")
-
-def image_handler(obj=obj, show_image=show_image, save_image=save_image):
-	try:
-		index = int(input("Input an index: "))
-		assert 0 <= index <= len(obj.mazes)
-	except Exception:
-		print("[ERROR]: Invalid index. Returning to menu...")
-
-	obj.mazes[index]["maze"].image(
-		show_image=show_image, save_image=save_image
-	)
+	def set_global(self):
+		self.global_command = True
 
 
-# Menu:
+	def set_attribute(self, identifier, lower_bound=0, is_bool=False):
+		try:
+			if is_bool:
+				return input(f"[{identifier.title()}] (Y/n) :: ").lower() in ('y', '1')
+
+			option = int(input(f"[{identifier.title()}] Integer value greater than {lower_bound} :: "))
+			assert option > lower_bound
+			return option
+
+		except Exception:
+			print("Invalid format. Switching to default value...")
+			return DEFAULTS[identifier]
+
+
+	def handler(self, method, arguments=''):
+		def temp():
+			if self.global_command:
+				for maze in self.object.mazes:
+					exec(f"maze['maze'].{method}({arguments})")
+				self.global_command = False
+			else:
+				try:
+					index = int(input("Input an index: "))
+					print(f"self.object.mazes[{index}]['maze'].{method}({arguments})")
+					exec(f"self.object.mazes[{index}]['maze'].{method}({arguments})")
+				except Exception:
+					print("[ERROR]: Invalid index. Returning to menu...")
+
+		return temp
+
+
+	def list(self):
+		for index, maze in enumerate(sorted(
+				self.object.mazes, reverse=True,
+				key=lambda x: x["ratio"])):
+			maze["index"] = index
+			self.object.display(maze)
+
+
+	def highest_ratio(self):
+		self.object.display(max(self.object.mazes, key=lambda x: x["ratio"]))
+
+
+	def lowest_ratio(self):
+		self.object.display(min(self.object.mazes, key=lambda x: x["ratio"]))
+
+
+	def image_handler(self):
+		if self.global_command:
+			for maze in self.object.mazes:
+				maze["maze"].image(
+					show_image=self.show_image, save_image=self.save_image
+				)
+			self.global_command = False
+		else:
+			try:
+				index = int(input("Input an index: "))
+				assert 0 <= index <= len(self.object.mazes)
+				self.object.mazes[index]["maze"].image(
+					show_image=self.show_image, save_image=self.save_image
+				)
+			except Exception:
+				print("[ERROR]: Invalid index. Returning to menu...")
+
+
+# Interface base:
+
+interface = Interface()
 
 options = (
-	("Benchmark utility", obj.benchmark),
-	("Comparison plot display", obj.display_plot),
-	("Generated mazes' list", obj.list),
-	("Get the lowest ratio maze", low),
-	("Get the highest ratio maze", high),
-	("Perform DF search", dfs_handler),
-	("Perform GBF search", gbfs_handler),
-	("Display maze on image", image_handler),
+	("Benchmark utility", interface.object.benchmark),
+	("Comparison plot display", interface.object.display_plot),
+	("Display maze on image", interface.image_handler),
+	("Generated mazes' list", interface.list),
+	("Get the lowest ratio maze", interface.lowest_ratio),
+	("Get the highest ratio maze", interface.highest_ratio),
+	("Perform DF search", interface.handler("dfs")),
+	("Perform GBF search", interface.handler("gbfs")),
+	("Perform RS search", interface.handler("rs")),
+	("Perform next action over all mazes", interface.set_global),
 	("Exit: ", quit)
 )
-
 
 # Interface's mainloop:
 
@@ -119,10 +130,10 @@ while True:
 
 	try:
 		index = int(input("\nSelect an index: ")) - 1
+		assert index >= 0
 		options[index][1]()
 	except IndexError:
 		print("[ERROR]: Invalid index, try again...")
 	except Exception:
 		print("[ERROR]: Undefined error exception. Fatal crash.")
 		quit()
-
