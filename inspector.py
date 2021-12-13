@@ -41,7 +41,7 @@ class Inspector:
 				"generation_order": iteration - self.start,
 				"maze": obj,
 				"path": path,
-				"total": total,w
+				"total": total,
 				"ratio": ratio
 			})
 
