@@ -1,14 +1,16 @@
 from main import Maze, Node
 import matplotlib.pyplot as plt
 
+
 DEFAULTS = {
-	"cycles": 1, "start": 10, "constant": 1, "ratio": 1 / 3, "logger": 0,
+	"start": 10, "cycles": 1, "constant": 1, "logger": 0,
 	"show_image": 1, "save_image": 0
 }
 
+
 class Inspector:
-	def __init__(self, cycles=DEFAULTS["cycles"], start=DEFAULTS["start"],
-		constant=DEFAULTS["constant"], ratio=DEFAULTS["ratio"],
+	def __init__(self, start=DEFAULTS["start"], cycles=DEFAULTS["cycles"],
+		constant=DEFAULTS["constant"], ratio=1,  # FIXME
 			logger=DEFAULTS["logger"]):
 
 		self.cycles = cycles
@@ -39,7 +41,7 @@ class Inspector:
 				"generation_order": iteration - self.start,
 				"maze": obj,
 				"path": path,
-				"total": total,
+				"total": total,w
 				"ratio": ratio
 			})
 
@@ -67,6 +69,14 @@ class Inspector:
 
 		plt.show()
 
+
+	def list(self, ascending_ratio=True):
+		maze_list = sorted(self.mazes, key=lambda x: x["ratio"], reverse=ascending_ratio)
+		for index, maze in enumerate(maze_list):
+			maze["index"] = index
+			self.display(maze)
+
+
 	def display(self, maze):
 		print(f"""
 Index: {maze["index"]}
@@ -76,9 +86,3 @@ Index: {maze["index"]}
 	Total:            {maze["total"]}
 	Ratio:            {maze["ratio"]}
 """)
-
-	def list(self, ascending_ratio=True):
-		maze_list = sorted(self.mazes, key=lambda x: x["ratio"], reverse=ascending_ratio)
-		for index, maze in enumerate(maze_list):
-			maze["index"] = index
-			self.display(maze)
