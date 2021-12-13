@@ -535,7 +535,7 @@ class Maze:
 		if save_image:
 			DIRECTORY = "images"
 			PREFIX = "maze"
-			FILE = f"./{DIRECTORY}/{PREFIX}_{str(time()).split('.')[0]}"
+			FILE = f"./{DIRECTORY}/{PREFIX}_{''.join(str(time()).split('.'))}"
 
 			if not path.isdir(f"./{DIRECTORY}"):
 				mkdir(f"./{DIRECTORY}")
