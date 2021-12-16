@@ -22,7 +22,7 @@ class Node:
 
 
 	def __repr__(self):
-		return f"(X: {self.X}, Y: {self.Y}, S: {self.state})"
+		return f"(X: {self.X}, Y: {self.Y}, S: {self.state}, W: {self.weight})"
 
 
 class Maze:
@@ -294,15 +294,12 @@ class Maze:
 			self.clear_pathed_nodes()
 
 		self.log("Start:", self.start)
-		timer_start = time()
-
+		timer = time()
 		frontier = [self.start]
 
-		self.log("[PATH GENERATOR] Frontier:", frontier)
+		self.log("[PATH GENERATOR] Initial rontier:", frontier)
 
 		while frontier != []:
-			self.log("[PATH GENERATOR] Beginning iteration...")
-
 			selected_nodes, candidates = [], []
 
 			for index, node in enumerate(frontier):
@@ -326,16 +323,15 @@ class Maze:
 				node.color = self.path_color
 				self.path_count += 1
 
-			self.log("[PATH GENERATOR] Frontier:", frontier)
-			self.log(f"Display:\n{str(self)}", indentation=1)
+			self.log("[PATH GENERATOR] Updated frontier:", frontier)
+			self.log(f"[PATH GENERATOR] Updated display:\n\n{self.ascii()}")
 
 		self.log("[PATH GENERATOR] Node map:", self.node_map)
 
 		self.goal_spreader()
 		self.is_pathed = True
 
-		timer_end = time()
-		self.log("[PATH GENERATOR] Generation time:", f"{(timer_end - timer_start):.5f}s.")
+		self.log("[PATH GENERATOR] Generation time:", f"{(time() - timer):.5f}s.")
 		self.log(f"Display:\n{str(self)}", indentation=1)
 
 
@@ -361,23 +357,29 @@ class Maze:
 		if self.is_explored:
 			self.clear_explored_nodes()
 
-		timer_start = time()
-
+		timer = time()
 		frontier, explored = self.next_nodes(self.start), []
+
+		self.log("[DFS] Initial frontier:", frontier)
 
 		while len(frontier) >= 1:
 			node = frontier.pop()
 			explored.append(node)
+
 			node.state = 2 if node.state != -10 else -10
 			self.explored_count += 1
+
+			self.log("[DFS] Selected node:", node)
 
 			for neighbor in self.next_nodes(node):
 				if neighbor.state == 1:
 					frontier.append(neighbor)
 
+					self.log("[DFS] Updated frontier:", frontier)
+					self.log(f"[DFS] Updated display:\n\n{self.ascii()}")
+
 				elif neighbor.state == 10:
-					timer_end = time()
-					self.log("[DFS] Search time:", f"{(timer_end - timer_start):.5}s.")
+					self.log("[DFS] Search time:", f"{(time() - timer):.5}s.")
 
 					self.set_gradient(len(explored))
 					self.set_node_color(explored)
@@ -401,35 +403,24 @@ class Maze:
 		for node in self.node_map:
 			node.weight = self.manhattan(node, self.end)
 
-		timer_start = time()
-
+		timer = time()
 		frontier, explored = [self.start], []
 
+		self.log("[GBFS] Initial frontier:", frontier)
+
 		while len(frontier) >= 1:
-
-			self.log("[GBFS] Beginning iteration...")
-
-			self.log(
-				"[GBFS] Frontier:",
-				[f"({node} :: {node.weight})" for node in frontier],
-				indentation=1
-			)
-
 			node = frontier.pop()
 			explored.append(node)
+
 			node.state = 2 if node.state != -10 else -10
 			self.explored_count += 1
 
-			self.log("[GBFS] Selected node:", node)
-
-			self.log(f"Display:\n{str(self)}", indentation=1)
+			self.log(f"[GBFS] Updated display:\n\n{self.ascii()}")
 
 			candidates = [node for node in self.next_nodes(node) if node.state in (1, 10)]
 
 			if any(candidate.coordinates == self.end.coordinates for candidate in candidates):
-				self.log("[GBFS] End node:", self.end)
-				timer_end = time()
-				self.log("[GBFS] Search time:", f"{(timer_end - timer_start):.5f}s.")
+				self.log("[GBFS] Search time:", f"{(time() - timer):.5f}s.")
 
 				self.set_gradient(len(explored))
 				self.set_node_color(explored)
@@ -439,16 +430,10 @@ class Maze:
 
 			self.log("[GBFS] Candidates:", candidates, indentation=1)
 
-			self.log(
-				"[GBFS] Weight list:",
-				[f"({node} :: {node.weight})" for node in candidates],
-				indentation=1
-			)
-
 			frontier.extend(candidates)
 			frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
 
-		self.log("[GBFS] End node:", self.end)
+			self.log("[GBFS] Updated frontier:", frontier)
 
 		self.set_gradient(len(explored))
 		self.set_node_color(explored)
@@ -466,35 +451,24 @@ class Maze:
 		for node in self.node_map:
 			node.weight = self.radial(node, self.end)
 
-		timer_start = time()
-
+		timer = time()
 		frontier, explored = [self.start], []
 
+		self.log("[GBFS] Initial frontier:", frontier)
+
 		while len(frontier) >= 1:
-
-			self.log("[RS] Beginning iteration...")
-
-			self.log(
-				"[RS] Frontier:",
-				[f"({node} :: {node.weight})" for node in frontier],
-				indentation=1
-			)
-
 			node = frontier.pop()
 			explored.append(node)
 			node.state = 2 if node.state != -10 else -10
 			self.explored_count += 1
 
-			self.log("[RS] Selected node:", node)
-
-			self.log(f"Display:\n{str(self)}", indentation=1)
+			self.log(f"[RS] Updated display:\n\n{self.ascii()}")
 
 			candidates = [node for node in self.next_nodes(node) if node.state in (1, 10)]
 
 			if any(candidate.coordinates == self.end.coordinates for candidate in candidates):
-				self.log("[RS] End node:", self.end)
 				timer_end = time()
-				self.log("[RS] Search time:", f"{(timer_end - timer_start):.5f}s.")
+				self.log("[RS] Search time:", f"{(time() - timer):.5f}s.")
 
 				self.set_gradient(len(explored))
 				self.set_node_color(explored)
@@ -504,16 +478,10 @@ class Maze:
 
 			self.log("[RS] Candidates:", candidates, indentation=1)
 
-			self.log(
-				"[RS] Weight list:",
-				[f"({node} :: {node.weight})" for node in candidates],
-				indentation=1
-			)
-
 			frontier.extend(candidates)
 			frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
 
-		self.log("[RS] End node:", self.end)
+			self.log("[RS] Updated frontier:", frontier)
 
 		self.set_gradient(len(explored))
 		self.set_node_color(explored)
