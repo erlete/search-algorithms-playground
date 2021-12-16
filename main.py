@@ -57,49 +57,62 @@ class Maze:
 		self.r_diff, self.g_diff, self.b_diff = 0, 0, 0
 
 		# Array settings:
-		self.X = dimensions[0]
-		self.Y = dimensions[1]
-		self.DIMENSIONS = dimensions
+		self.X, self.Y = dimensions[0], dimensions[1]
 
-		# Bidimensional node array:
 		self.base = [
 			[Node(column, row, state=0, color=self.wall_color)
 			for column in range(self.X)] for row in range(self.Y)
 		]
 
-		# Starting point selection:
 		self.start = self.base[randrange(0, self.Y)][randrange(0, self.X)]
-		self.start.state = -10
-		self.start.color = self.start_color
+		self.start.state, self.start.color = -10, self.start_color
 
 		# Plain node array:
 		self.node_map = []
 		for row in self.base:
 			self.node_map.extend(row)
 
-		self.is_explored = False
+		# Array statistics:
+		self.total_count = self.X * self.Y
+		self.path_count, self.explored_count = 0, 0
+
+		self.is_pathed, self.is_explored = False, False
 
 		# Logger settings:
 		self.logger = logger
-		self.LOG_FILE = f"log{int(time())}.txt"
-		self.PREFIX = datetime.now().isoformat()
-		self.SEPARATOR = '-'
+		self.LOG_DIRECTORY = "log_cache"
+		self.LOG_PREFIX = "log"
+		self.LOG_FORMAT = "txt"
+		self.LOG_FILE = f"./{self.LOG_DIRECTORY}/{self.LOG_PREFIX}_" +\
+			f"{''.join(str(time()).split('.'))}.{self.LOG_FORMAT}"
+		# Logs are dinamically modified, so its identifier must remain fixed
+		#	so that more contents can be appended to them.
 
+		# Image settings:
+		self.IMAGE_DIRECTORY = "image_cache"
+		self.IMAGE_PREFIX = "image"
+		self.IMAGE_FORMAT = "png"
+		self.IMAGE_FILE = None
+		# Images might be exported several times per object creation, hence
+		#	the necessity of making its identifier variable (in 'Maze.image').
 
+		self.path_generator()
 
 
 	def writer(self, file: str, argument, indentation: int, newlines: int):
 		header = f"+ {datetime.now().isoformat()} "
 		file.write(
-			header.ljust(
-				len(header) + 4 * (indentation + 1), self.SEPARATOR
-			) + f" {argument}" + newlines * '\n'
+			header.ljust(len(header) + 4 * (indentation + 1), '-')
+			+ f" {argument}" + newlines * '\n'
 		)
 
 
-	def log(self, *arguments, indentation=0, expand=True):
+	def log(self, *arguments, indentation=0, expand=True) -> None:
 		if not self.logger:
 			return None
+
+		if not path.isdir(f"./{self.LOG_DIRECTORY}"):
+			mkdir(f"./{self.LOG_DIRECTORY}")
 
 		with open(self.LOG_FILE, mode='a') as lg:
 			if len(arguments) >= 1:
@@ -130,7 +143,7 @@ class Maze:
 		)
 
 
-	def set_node_color(self, explored_nodes: int):
+	def set_node_color(self, explored_nodes: int) -> None:
 		for node in explored_nodes:
 			self.increment_gradient()
 			node.color = (
@@ -220,7 +233,17 @@ class Maze:
 				node.state = 1
 				node.color = self.path_color
 
+		self.explored_count = 0
 		self.explored_color = self.start_color
+
+
+	def clear_pathed_nodes(self) -> None:
+		for node in self.node_map:
+			if node.state != -10:
+				node.state = 0
+				node.color = self.wall_color
+
+		self.path_count = 0
 
 
 	def caesar(self, nodes: list) -> list:
@@ -267,6 +290,9 @@ class Maze:
 	def path_generator(self, bias=5) -> None:
 		"""Randomly generates a pathway for the array."""
 
+		if self.is_pathed:
+			self.clear_pathed_nodes()
+
 		self.log("Start:", self.start)
 		timer_start = time()
 
@@ -298,6 +324,7 @@ class Maze:
 			for node in frontier:
 				node.state = 1
 				node.color = self.path_color
+				self.path_count += 1
 
 			self.log("[PATH GENERATOR] Frontier:", frontier)
 			self.log(f"Display:\n{str(self)}", indentation=1)
@@ -305,6 +332,7 @@ class Maze:
 		self.log("[PATH GENERATOR] Node map:", self.node_map)
 
 		self.goal_spreader()
+		self.is_pathed = True
 
 		timer_end = time()
 		self.log("[PATH GENERATOR] Generation time:", f"{(timer_end - timer_start):.5f}s.")
@@ -341,6 +369,7 @@ class Maze:
 			node = frontier.pop()
 			explored.append(node)
 			node.state = 2 if node.state != -10 else -10
+			self.explored_count += 1
 
 			for neighbor in self.next_nodes(node):
 				if neighbor.state == 1:
@@ -389,6 +418,7 @@ class Maze:
 			node = frontier.pop()
 			explored.append(node)
 			node.state = 2 if node.state != -10 else -10
+			self.explored_count += 1
 
 			self.log("[GBFS] Selected node:", node)
 
@@ -453,6 +483,7 @@ class Maze:
 			node = frontier.pop()
 			explored.append(node)
 			node.state = 2 if node.state != -10 else -10
+			self.explored_count += 1
 
 			self.log("[RS] Selected node:", node)
 
@@ -517,33 +548,35 @@ class Maze:
 		# Dimensions and canvas definition:
 		cell, border = 50, 4
 
-		img = Image.new(
-			mode="RGB", size=(self.Y * cell, self.X * cell), color="black"
+		image = Image.new(
+			mode="RGB", size=(self.X * cell, self.Y * cell), color="black"
 		)
 
 		# Canvas modification:
-		draw = ImageDraw.Draw(img)
+		image_draw = ImageDraw.Draw(image)
 
 		for ri, row in enumerate(self.base):
 			for ci, node in enumerate(row):
-				draw.rectangle(
+				image_draw.rectangle(
 					([(ci * cell + border, ri * cell + border),
 					((ci + 1) * cell - border, (ri + 1) * cell - border)]),
 					fill=node.color
 				)
 
-		if save_image:
-			DIRECTORY = "images"
-			PREFIX = "maze"
-			FILE = f"./{DIRECTORY}/{PREFIX}_{''.join(str(time()).split('.'))}"
-
-			if not path.isdir(f"./{DIRECTORY}"):
-				mkdir(f"./{DIRECTORY}")
-
-			img.save(f"{FILE}.png")
-
+		# Image export:
 		if show_image:
-			img.show()
+			image.show()
+
+		if save_image:
+			if not path.isdir(f"./{self.IMAGE_DIRECTORY}"):
+				mkdir(f"./{self.IMAGE_DIRECTORY}")
+
+			self.IMAGE_FILE = f"./{self.IMAGE_DIRECTORY}/{self.IMAGE_PREFIX}" \
+				+ f"_{''.join(str(time()).split('.'))}.{self.IMAGE_FORMAT}"
+
+			image.save(self.IMAGE_FILE)
+
+			return self.IMAGE_FILE
 
 
 	def __repr__(self):
