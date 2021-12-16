@@ -1,6 +1,6 @@
 # Custom directories:
-*images/
-*logs/
+*image_cache/
+*log_cache/
 
 ### macOS ###
 # General
