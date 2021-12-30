@@ -1,4 +1,5 @@
 # Custom directories:
+.tests*
 *image_cache/
 *log_cache/
 
