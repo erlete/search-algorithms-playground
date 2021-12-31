@@ -1,16 +1,17 @@
-"""Main generator and solver module for search algorithms testing."""
+"""Base module for search algorithms testing."""
 
 
 from datetime import datetime
-from PIL import Image, ImageDraw
-from random import randint, randrange, sample
 from os import mkdir, path
+from random import randint, randrange, sample
 from time import time
+from PIL import Image, ImageDraw
 
 
 class Node:
 	"""Data structure that represents an element of an array with special
-	properties.
+	properties that determine its location in the array, its state, weight,
+	parent node, color...
 
 	Parameters
 	----------
@@ -23,10 +24,6 @@ class Node:
 	weight : int
 		Value that measures how much the overall path cost increases when the
 		node is considered as part of it.
-	parent : Node
-		Another node from which the current one is origined.
-	color : tuple[int, int, int]
-		RGB color code for visual display of the node.
 	"""
 
 	STATE_STRING = {
@@ -50,7 +47,7 @@ class Node:
 	STATE_COLOR = {
 		-10: (166, 47, 47),
 		0: (0, 0, 0),
-		1: (200, 200, 200),
+		1: (169, 159, 159),
 		2: (0, 0, 0),
 		3: (235, 167, 89),
 		10: (48, 19, 92)
@@ -128,7 +125,7 @@ class Maze:
 		class' methods should be logged.
 	"""
 
-	def __init__(self, dimensions, logger=False):
+	def __init__(self, dimensions, *, logger=False):
 		if isinstance(dimensions, tuple):
 			if dimensions[0] <= 3 or dimensions[1] <= 3:
 				raise Exception("'dimensions' must be greater than 3.")
@@ -178,40 +175,43 @@ class Maze:
 		# Images might be exported several times per object creation, hence
 		#	the necessity of making their identifier variable (in 'Maze.image').
 
-		self.path_generator()
+		self.generate_path()
 
-
-	def _writer(self, file: str, argument, indentation: int, newlines: int):
+	@staticmethod
+	def _writer(file: str, argument, indentation: int, newlines: int):
+		"""TODO: add docstring"""
 		header = f"+ {datetime.now().isoformat()} "
 		file.write(
 			header.ljust(len(header) + 4 * (indentation + 1), '-')
 			+ f" {argument}" + newlines * '\n'
 		)
 
-
 	def _log(self, *arguments, indentation=0, expand=True) -> None:
+		"""TODO: add docstring"""
 		if not self.logger:
 			return None
 
 		if not path.isdir(f"./{self.LOG_DIRECTORY}"):
 			mkdir(f"./{self.LOG_DIRECTORY}")
 
-		with open(self.LOG_FILE, mode='a') as lg:
+		with open(self.LOG_FILE, mode='a', encoding="utf-8") as log_file:
 			if len(arguments) >= 1:
-				self._writer(lg, arguments[0], indentation, 1)
+				self._writer(log_file, arguments[0], indentation, 1)
 
 				if len(arguments) > 1:
 					for argument in arguments[1:]:
 						if isinstance(argument, (list, tuple, set)) and expand:
 							for index, element in enumerate(argument):
-								self._writer(lg, f"{index} :: {element}", indentation + 2, 1)
+								self._writer(log_file, f"{index} :: {element}", indentation + 2, 1)
 						else:
-							self._writer(lg, argument, indentation + 1, 1)
+							self._writer(log_file, argument, indentation + 1, 1)
 
-			lg.write('\n')
+			log_file.write('\n')
 
+		return None
 
 	def _set_node_color(self):
+		"""TODO: add docstring"""
 		differential = (
 			(self.end.color[0] - self.start.color[0]) / self.count["explored"],
 			(self.end.color[1] - self.start.color[1]) / self.count["explored"],
@@ -225,8 +225,8 @@ class Maze:
 					int(self.start.color[2] + differential[2] * index)
 				))
 
-
 	def _reset_explored_nodes(self) -> None:
+		"""TODO: add docstring"""
 		for node in self.node_list:
 			if node.state == 2:
 				node.set_state(1)
@@ -235,34 +235,26 @@ class Maze:
 		self.count["explored"] = 0
 		self.explored_nodes.clear()
 
-
 	def _reset_optimal_nodes(self) -> None:
+		"""TODO: add docstring"""
 		for node in self.node_list:
 			if node.state == 3:
 				node.set_state(1)
 
-
 	def _reset_generated_nodes(self) -> None:
+		"""TODO: add docstring"""
 		for node in self.node_list:
 			if node.state != -10:
 				node.set_state(0)
 
 		self.count["path"] = 0
 
-
 	def _get_neighbors(self, node: Node) -> list:
 		"""Gets the nodes immediately next to the given coordinates from
-		'self.node_matrix'.
+		`self.node_matrix` (top, right, bottom, left).
 
-		The order in which the surrounding nodes are returned is set in a
-		random way, in order to prevent data pre-setting.
-
-		Process illustration:
-		---------------------
-
-				T
-			L   X   R
-				B
+		The order in which the neighbor nodes are returned is set in a random
+		way, in order to prevent data pre-setting.
 		"""
 
 		coordinates = (
@@ -272,7 +264,10 @@ class Maze:
 			(node.x - 1, node.y)   # Left
 		)
 
-		self._log(f"[NEXT_NODES] Next coordinates for node {node}:", coordinates, indentation=1, expand=False)
+		self._log(
+			f"[NEXT_NODES] Next coordinates for node {node}:",
+			coordinates, indentation=1, expand=False
+		)
 
 		nodes = [
 			self.node_matrix[coord[1]][coord[0]] for coord in coordinates
@@ -283,7 +278,6 @@ class Maze:
 		self._log(f"[NEXT_NODES] Next nodes for node {node}:", nodes, indentation=2)
 
 		return nodes
-
 
 	def _get_square_neighbors(self, node: Node) -> list:
 		"""Gets the values in the square surroundings of the given coordinates.
@@ -312,7 +306,10 @@ class Maze:
 			(node.x - 1, node.y)	   # Middle left
 		)
 
-		self._log(f"[SURROUNDING NODES] Surrounding coordinates for node {node}:", coordinates, indentation=1, expand=False)
+		self._log(
+			f"[SURROUNDING NODES] Surrounding coordinates for node {node}:",
+			coordinates, indentation=1, expand=False
+		)
 
 		nodes = [
 			self.node_matrix[coord[1]][coord[0]] for coord in coordinates
@@ -323,8 +320,8 @@ class Maze:
 
 		return nodes
 
-
 	def _get_optimal_path(self) -> None:
+		"""TODO: add docstring"""
 		if self.end in self.explored_nodes:
 			self.optimal_path = [self.end]
 			node = self.end.parent
@@ -335,14 +332,8 @@ class Maze:
 			self.optimal_path.append(self.start)
 			self.optimal_path.reverse()
 
-
 	def _randomize_divergence(self, nodes: list) -> list:
-		"""Random path divergence generator. Takes one or multiple path
-		divergence possibilities and selects at least one of them.
-
-		The name is due to the 'lives, dies' choice of Julius Caesar during
-		colosseum gladiator games.
-		"""
+		"""TODO: add docstring"""
 		self._log("[CAESAR] Unfiltered:", nodes, indentation=1)
 
 		bias = round(max(self.x, self.y) * (1 / 4))
@@ -361,23 +352,22 @@ class Maze:
 
 		path_tiles = [node for node in self.node_list if node.state == 1]
 
-		self._log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
+			self._log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
 
-		self.end = path_tiles[0]
-		top_distance = self._manhattan_distance(self.end, path_tiles[0])
+			self.end = path_tiles[0]
+			top_distance = self._manhattan_distance(self.end, path_tiles[0])
 
-		for tile in path_tiles:
-			if self._manhattan_distance(self.start, tile) > top_distance:
-				top_distance = self._manhattan_distance(self.start, tile)
-				self.end = tile
+			for tile in path_tiles:
+				if self._manhattan_distance(self.start, tile) > top_distance:
+					top_distance = self._manhattan_distance(self.start, tile)
+					self.end = tile
 
-		self.end.set_state(10)
+			self.end.set_state(10)
 
-		self._log("[GOAL SPREADER] Selected goal:", self.end, indentation=2)
+			self._log("[GOAL SPREADER] Selected goal:", self.end, indentation=2)
 
-
-	def path_generator(self, bias=5) -> None:
-		"""Randomly generates a pathway for the array."""
+	def generate_path(self) -> None:
+		"""Generates a random path for the base array."""
 
 		if self.is_generated:
 			self._reset_generated_nodes()
@@ -388,10 +378,10 @@ class Maze:
 
 		self._log("[PATH GENERATOR] Initial rontier:", frontier)
 
-		while frontier != []:
+		while frontier:
 			selected_nodes, candidates = [], []
 
-			for index, node in enumerate(frontier):
+			for node in frontier:
 				candidates.extend(
 					[neighbor for neighbor in self._get_neighbors(node)
 					if neighbor.state not in (-10, 1)]
@@ -422,25 +412,36 @@ class Maze:
 		self._log("[PATH GENERATOR] Generation time:", f"{(time() - timer):.5f}s.")
 		self._log(f"Display:\n{str(self)}", indentation=1)
 
-
 	@staticmethod
 	def _manhattan_distance(start: Node, end: Node) -> int:
-		"""Returns the _manhattan_distance distance between two nodes (sum of the
-		absolute cartesian coordinates difference between two nodes).
+		"""Returns the _manhattan_distance distance between two nodes (sum of
+		the absolute cartesian coordinates difference between two nodes).
+
+		Parameters
+		----------
+		start : Node
+			The starting node.
+		end : Node
+			The ending node.
 		"""
 		return abs(start.x - end.x) + abs(start.y - end.y)
 
-
 	@staticmethod
 	def _radial_distance(start: Node, end: Node) -> float:
-		"""Returns the _radial_distance distance between two nodes (square root of the
-		sum of each node's coordinates squared).
+		"""Returns the radial distance distance between two nodes (square root
+		of the sum of each node's coordinates squared).
+
+		Parameters
+		----------
+		start : Node
+			The starting node.
+		end : Node
+			The ending node.
 		"""
 		return ((start.x - end.x) ** 2 + (start.y - end.y) ** 2) ** .5
 
-
-	def dfs(self) -> bool:
-		"""Depth-First Search (DFS)."""
+	def depth_first_search(self) -> bool:
+		"""Depth-First Search method."""
 
 		if self.is_explored:
 			self._reset_explored_nodes()
@@ -459,7 +460,10 @@ class Maze:
 			self._log("[DFS] Selected node:", node)
 			self._log(f"[DFS] Updated display:\n\n{self.ascii()}")
 
-			neighbors = [node for node in self._get_neighbors(node) if node.state in (1, 10)]
+			neighbors = [
+				node for node in self._get_neighbors(node)
+				if node.state in (1, 10)
+			]
 
 			for neighbor in neighbors:
 				neighbor.parent = node
@@ -480,9 +484,8 @@ class Maze:
 		self._get_optimal_path()
 		return has_end
 
-
-	def bfs(self) -> bool:
-		"""Breadth-First Search (BFS)."""
+	def breadth_first_search(self) -> bool:
+		"""Breadth-First Search method."""
 
 		if self.is_explored:
 			self._reset_explored_nodes()
@@ -501,7 +504,10 @@ class Maze:
 			self._log("[BFS] Selected node:", node)
 			self._log(f"[BFS] Updated display:\n\n{self.ascii()}")
 
-			neighbors = [node for node in self._get_neighbors(node) if node.state in (1, 10)]
+			neighbors = [
+				node for node in self._get_neighbors(node)
+				if node.state in (1, 10)
+			]
 
 			for neighbor in neighbors:
 				neighbor.parent = node
@@ -522,9 +528,8 @@ class Maze:
 		self._get_optimal_path()
 		return has_end
 
-
-	def gbfs(self) -> bool:
-		"""Greedy Best-First Search (GBFS)."""
+	def greedy_best_first_search(self) -> bool:
+		"""Greedy Best-First Search method."""
 
 		if self.is_explored:
 			self._reset_explored_nodes()
@@ -546,7 +551,10 @@ class Maze:
 			self._log("[GBFS] Selected node:", node)
 			self._log(f"[GBFS] Updated display:\n\n{self.ascii()}")
 
-			neighbors = [node for node in self._get_neighbors(node) if node.state in (1, 10)]
+			neighbors = [
+				node for node in self._get_neighbors(node)
+				if node.state in (1, 10)
+			]
 
 			for neighbor in neighbors:
 				neighbor.parent = node
@@ -570,9 +578,8 @@ class Maze:
 		self._get_optimal_path()
 		return has_end
 
-
-	def rs(self) -> bool:
-		"""Radial Search (GBFS)."""
+	def radial_search(self) -> bool:
+		"""Radial Search method."""
 
 		if self.is_explored:
 			self._reset_explored_nodes()
@@ -594,7 +601,10 @@ class Maze:
 			self._log("[RS] Selected node:", node)
 			self._log(f"[RS] Updated display:\n\n{self.ascii()}")
 
-			neighbors = [node for node in self._get_neighbors(node) if node.state in (1, 10)]
+			neighbors = [
+				node for node in self._get_neighbors(node)
+				if node.state in (1, 10)
+			]
 
 			for neighbor in neighbors:
 				if neighbor.state == self.end.state:
@@ -616,23 +626,31 @@ class Maze:
 		self._get_optimal_path()
 		return has_end
 
-
-
 	def ascii(self) -> str:
-		return (
-			f"╔═{2 * '═' * self.x}╗\n"
-				+ ''.join(
-					''.join(
-						['║ ' + ''.join(
-							[node.ascii for node in row]
-						) + '║\n']
-					) for row in self.node_matrix
-				) + f"╚═{2 * '═' * self.x}╝"
-			)
+		"""Returns an ASCII representation of the maze array with each node's
+		corresponding character.
+		"""
+		return (f"╔═{2 * '═' * self.x}╗\n"
+			+ ''.join(
+				''.join(
+					['║ ' + ''.join(
+						[node.ascii for node in row]
+					) + '║\n']
+				) for row in self.node_matrix
+			) + f"╚═{2 * '═' * self.x}╝"
+		)
 
+	def image(self, *, show_image=True, save_image=False) -> str:
+		"""Generates an image from the maze array, coloring each
+		node in a different way.
 
-	def image(self, show_image=True, save_image=False) -> None:
-
+		Parameters
+		----------
+		show_image : bool
+			Determines whether or not the image should be displayed.
+		save_image : bool
+			Determines whether or not the image should be saved.
+		"""
 		# Dimensions and canvas definition:
 		cell, border = 50, 8
 
@@ -690,6 +708,7 @@ class Maze:
 
 			return self.IMAGE_FILE
 
+		return ''
 
 	def __repr__(self):
 		return f"({self.x}x{self.y}) {self.__class__} instance"
