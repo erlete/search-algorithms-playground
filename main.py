@@ -53,10 +53,10 @@ class Node:
 		10: (48, 19, 92)
 	}
 
-	def __init__(self, x: int, y: int, state=0, weight=0, parent=None):
+	def __init__(self, x: int, y: int, *, state=0, weight=0):
 		# Node localization:
 		self.x, self.y = x, y
-		self.parent = parent
+		self.parent = None
 
 		# Node classification:
 		self.state = state
@@ -77,6 +77,10 @@ class Node:
 	def set_color(self, rgb: tuple[int, int, int]) -> None:
 		"""Changes node's color."""
 		self.color = rgb
+
+	def set_parent(self, parent):
+		"""Changes node's parent node."""
+		self.parent = parent
 
 	def __repr__(self):
 		return f"Node(X: {self.x}, Y: {self.y}, " \
@@ -147,6 +151,7 @@ class Maze:
 
 		self.start = self.node_matrix[randrange(0, self.y)][randrange(0, self.x)]
 		self.start.set_state(-10)
+		self.end = Node(0, 0)
 
 		# Array metrics:
 		self.explored_nodes, self.optimal_path = [], []
@@ -344,13 +349,13 @@ class Maze:
 
 		return nodes
 
+	def _set_end_node(self, probability=.8) -> None:
+		"""TODO: add docstring"""
+		if not 0 <= probability <= 1:
+			raise Exception("'probability' must be a float between 0 and 1.")
 
-	def _set_end_node(self) -> None:
-		"""Sets the position of the goal state at the farthest possible
-		coordinate in the array.
-		"""
-
-		path_tiles = [node for node in self.node_list if node.state == 1]
+		if randint(0, 100) / 100 < probability:
+			path_tiles = [node for node in self.node_list if node.state == 1]
 
 			self._log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
 
@@ -466,7 +471,7 @@ class Maze:
 			]
 
 			for neighbor in neighbors:
-				neighbor.parent = node
+				neighbor.set_parent(node)
 
 				if neighbor.state == self.end.state:
 					self.explored_nodes.append(self.end)
@@ -510,7 +515,7 @@ class Maze:
 			]
 
 			for neighbor in neighbors:
-				neighbor.parent = node
+				neighbor.set_parent(node)
 
 				if neighbor.state == self.end.state:
 					self.explored_nodes.append(self.end)
@@ -557,7 +562,7 @@ class Maze:
 			]
 
 			for neighbor in neighbors:
-				neighbor.parent = node
+				neighbor.set_parent(node)
 
 				if neighbor.state == self.end.state:
 					self.explored_nodes.append(self.end)
@@ -607,6 +612,8 @@ class Maze:
 			]
 
 			for neighbor in neighbors:
+				neighbor.set_parent(node)
+
 				if neighbor.state == self.end.state:
 					self.explored_nodes.append(self.end)
 					has_end = True
