@@ -48,7 +48,7 @@ class Interface:
     def handler(self, method, arguments=''):
         def temp():
             if self.global_command:
-                for maze in self.object.mazes:
+                for _ in self.object.mazes:
                     exec(f"maze['maze'].{method}({arguments})")
                 self.global_command = False
             else:

@@ -53,8 +53,8 @@ class Inspector:
         if self.constant:
             self.x_axis = range(self.cycles)
 
-        real = plt.plot(self.x_axis, self.y_axis, color=real_plot_color)
-        ideal = plt.plot(self.x_axis, [
+        plt.plot(self.x_axis, self.y_axis, color=real_plot_color)
+        plt.plot(self.x_axis, [
             self.ratio for _ in range(self.start, self.cycles + self.start)
         ], color=ideal_plot_color)
 
