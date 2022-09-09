@@ -74,7 +74,7 @@ class Node:
         if set_ascii:
             self.ascii = self.STATE_ASCII[self.state]
 
-    def set_color(self, rgb: tuple[int, int, int]) -> None:
+    def set_color(self, rgb: tuple) -> None:
         """Changes node's color."""
         self.color = rgb
 
@@ -93,7 +93,7 @@ class Frontier:
     def __init__(self, initial_node: Node):
         self.nodes = [initial_node]
 
-    def add_nodes(self, nodes: list[Node]) -> None:
+    def add_nodes(self, nodes: list) -> None:
         self.nodes.extend(nodes)
 
     def is_empty(self) -> bool:

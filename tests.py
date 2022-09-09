@@ -25,7 +25,7 @@ def test_2(size=CONSTANTS["dimensions"], logger=CONSTANTS["logger"]):
     print("\nTEST 2")
 
     obj = Maze(size, logger=logger)
-    obj.path_generator()
+    obj.generate_path()
 
     print(obj.ascii())
 
@@ -37,7 +37,7 @@ def test_3(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     print("\nTEST 3")
 
     obj = Maze(size, logger=logger)
-    obj.path_generator()
+    obj.generate_path()
 
     obj.image()
 
@@ -49,8 +49,8 @@ def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     print("\nTEST 4")
 
     obj = Maze(size, logger=logger)
-    obj.path_generator()
-    obj.dfs()
+    obj.generate_path()
+    obj.depth_first_search()
 
     print(obj.ascii())
     obj.image()
@@ -63,8 +63,8 @@ def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     print("\nTEST 5")
 
     obj = Maze(size, logger=logger)
-    obj.path_generator()
-    obj.gbfs()
+    obj.generate_path()
+    obj.greedy_best_first_search()
 
     print(obj.ascii())
     obj.image()
@@ -80,11 +80,11 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
         obj = Maze((iteration, iteration), logger=logger)
 
         time_0 = time()
-        obj.path_generator()
+        obj.generate_path()
         time_1 = time()
-        obj.dfs()
+        obj.depth_first_search()
         time_2 = time()
-        obj.gbfs()
+        obj.greedy_best_first_search()
         time_3 = time()
 
         y_axis_1.append(time_1 - time_0)
@@ -111,12 +111,12 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
 
     for iteration in x_axis:
         obj = Maze((iteration, iteration), logger=logger)
-        obj.path_generator()
+        obj.generate_path()
 
         time_0 = time()
-        obj.dfs()
+        obj.depth_first_search()
         time_1 = time()
-        obj.gbfs()
+        obj.greedy_best_first_search()
         time_2 = time()
 
         y_axis_1.append(time_1 - time_0)
