@@ -29,7 +29,7 @@ class Inspector:
         for iteration in range(self.start, self.start + self.cycles):
             dimension = iteration if not self.constant else self.start
             obj = Maze((dimension, dimension), logger=self.logger)
-            obj.generate_path()
+            obj._generate_path()
 
             path = sum([1 if node.state == 1 else 0 for node in obj.node_map])
             total = iteration ** 2

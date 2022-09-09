@@ -25,7 +25,7 @@ def test_2(size=CONSTANTS["dimensions"], logger=CONSTANTS["logger"]):
     print("\nTEST 2")
 
     obj = Maze(size, logger=logger)
-    obj.generate_path()
+    obj._generate_path()
 
     print(obj.ascii())
 
@@ -37,7 +37,7 @@ def test_3(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     print("\nTEST 3")
 
     obj = Maze(size, logger=logger)
-    obj.generate_path()
+    obj._generate_path()
 
     obj.image()
 
@@ -49,7 +49,7 @@ def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     print("\nTEST 4")
 
     obj = Maze(size, logger=logger)
-    obj.generate_path()
+    obj._generate_path()
     obj.depth_first_search()
 
     print(obj.ascii())
@@ -63,7 +63,7 @@ def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     print("\nTEST 5")
 
     obj = Maze(size, logger=logger)
-    obj.generate_path()
+    obj._generate_path()
     obj.greedy_best_first_search()
 
     print(obj.ascii())
@@ -73,14 +73,14 @@ def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
 def test_6(cycles=CONSTANTS["cycles"], logger=False):
     """Visual benchmarking utility (path generation vs search methods)."""
 
-    x_axis = range(3, cycles)
+    x_axis = range(4, cycles)
     y_axis_1, y_axis_2, y_axis_3 = [], [], []
 
     for iteration in x_axis:
         obj = Maze((iteration, iteration), logger=logger)
 
         time_0 = time()
-        obj.generate_path()
+        obj._generate_path()
         time_1 = time()
         obj.depth_first_search()
         time_2 = time()
@@ -106,12 +106,12 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
 def test_6(cycles=CONSTANTS["cycles"], logger=False):
     """Visual benchmarking utility (search methods)."""
 
-    x_axis = range(3, cycles)
+    x_axis = range(4, cycles)
     y_axis_1, y_axis_2 = [], []
 
     for iteration in x_axis:
         obj = Maze((iteration, iteration), logger=logger)
-        obj.generate_path()
+        obj._generate_path()
 
         time_0 = time()
         obj.depth_first_search()
