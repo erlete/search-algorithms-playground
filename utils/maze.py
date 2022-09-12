@@ -100,7 +100,256 @@ class MazeBase:
         }
 
 
-class Maze(MazeBase):
+class Search:
+    """Contains search algorithms and methods related to maze exploration."""
+
+    @staticmethod
+    def manhattan_distance(start: Node, end: Node) -> int:
+        """Returns the manhattan_distance distance between two nodes (sum of
+        the absolute cartesian coordinates difference between two nodes).
+
+        Parameters:
+        -----------
+         - start : Node
+            The starting node.
+         - end : Node
+            The ending node.
+        """
+
+        return abs(start.x - end.x) + abs(start.y - end.y)
+
+    @staticmethod
+    def radial_distance(start: Node, end: Node) -> float:
+        """Returns the radial distance distance between two nodes (square root
+        of the sum of each node's coordinates squared).
+
+        Parameters
+        ----------
+         - start : Node
+            The starting node.
+         - end : Node
+            The ending node.
+        """
+
+        return ((start.x - end.x) ** 2 + (start.y - end.y) ** 2) ** .5
+
+    def depth_first_search(self) -> bool:
+        """Depth-First Search method.
+
+        Uses StackFrontier data structure, returning the last added node in
+        the first place. This causes the algorithm to explore a path until
+        it reaches a dead end, then backtracks to the last node that has
+        unexplored neighbors and repeats the process.
+        """
+
+        if self._is_explored:
+            self._reset_explored_nodes()
+
+        timer = time()
+        frontier = StackFrontier()
+        frontier.add(self._start)
+        self._is_explored, has_end = True, False
+
+        self._log("[DFS] Initial frontier:", frontier)
+
+        while not frontier.is_empty() and not has_end:
+            self._explored_nodes.append(node := frontier.remove())
+            if node.state != -10:
+                node.set_state(2)
+
+            self._log("[DFS] Selected node:", node)
+            self._log(f"[DFS] Updated display:\n\n{self.ascii()}")
+
+            neighbors = [
+                node for node in self._get_neighbors(node)
+                if node.state in (1, 10)
+            ]
+
+            for neighbor in neighbors:
+                neighbor.set_parent(node)
+
+                if neighbor.state == self._end.state:
+                    self._explored_nodes.append(self._end)
+                    has_end = True
+
+                    self._log("[DFS] Search time:", f"{(time() - timer):.5}s.")
+                    break
+
+            frontier.add(neighbors)
+
+            self._log("[DFS] Updated frontier:", frontier)
+
+        self._count["explored"] = len(self._explored_nodes)
+        self._set_node_color()
+        self._get_optimal_path()
+        return has_end
+
+    def breadth_first_search(self) -> bool:
+        """Breadth-First Search method.
+
+        Uses QueueFrontier data structure, returning the first added node in
+        the first place. This causes the algorithm to explore all possible
+        paths simultaneously, taking more time to find the optimal path, but
+        preventing dead-end search processes.
+        """
+
+        if self._is_explored:
+            self._reset_explored_nodes()
+
+        timer = time()
+        frontier = QueueFrontier()
+        frontier.add(self._start)
+        self._is_explored, has_end = True, False
+
+        self._log("[BFS] Initial frontier:", frontier)
+
+        while not frontier.is_empty() and not has_end:
+            self._explored_nodes.append(node := frontier.remove())
+            if node.state != -10:
+                node.set_state(2)
+
+            self._log("[BFS] Selected node:", node)
+            self._log(f"[BFS] Updated display:\n\n{self.ascii()}")
+
+            neighbors = [
+                node for node in self._get_neighbors(node)
+                if node.state in (1, 10)
+            ]
+
+            for neighbor in neighbors:
+                neighbor.set_parent(node)
+
+                if neighbor.state == self._end.state:
+                    self._explored_nodes.append(self._end)
+                    has_end = True
+
+                    self._log("[BFS] Search time:", f"{(time() - timer):.5}s.")
+                    break
+
+            frontier.add(neighbors)
+
+            self._log("[BFS] Updated frontier:", frontier)
+
+        self._count["explored"] = len(self._explored_nodes)
+        self._set_node_color()
+        self._get_optimal_path()
+        return has_end
+
+    def greedy_best_first_search(self) -> bool:
+        """Greedy Best-First Search method.
+
+        Uses the manhattan distance heuristic to find the path that is closest
+        to the end, yet it doesn't guarantee the optimal path. This often
+        causes the algorithm to search several dead-ends before finding the
+        end node.
+        """
+
+        if self._is_explored:
+            self._reset_explored_nodes()
+
+        for node in self._node_list:
+            node.weight = self.manhattan_distance(node, self._end)
+
+        timer = time()
+        frontier = [self._start]
+        self._is_explored, has_end = True, False
+
+        self._log("[GBFS] Initial frontier:", frontier)
+
+        while len(frontier) >= 1 and not has_end:
+            self._explored_nodes.append(node := frontier.pop())
+            if node.state != -10:
+                node.set_state(2)
+
+            self._log("[GBFS] Selected node:", node)
+            self._log(f"[GBFS] Updated display:\n\n{self.ascii()}")
+
+            neighbors = [
+                node for node in self._get_neighbors(node)
+                if node.state in (1, 10)
+            ]
+
+            for neighbor in neighbors:
+                neighbor.set_parent(node)
+
+                if neighbor.state == self._end.state:
+                    self._explored_nodes.append(self._end)
+                    has_end = True
+
+                    self._log("[GBFS] Search time:",
+                              f"{(time() - timer):.5f}s.")
+                    break
+
+            self._log("[GBFS] Neighbors:", neighbors, indentation=1)
+
+            frontier.extend(neighbors)
+            frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
+
+            self._log("[GBFS] Updated frontier:", frontier)
+
+        self._count["explored"] = len(self._explored_nodes)
+        self._set_node_color()
+        self._get_optimal_path()
+        return has_end
+
+    def radial_search(self) -> bool:
+        """Radial Search method.
+
+        Uses the radial distance heuristic to find the path that is closest
+        to the end, yet it doesn't guarantee the optimal path. This often
+        causes the algorithm to search several dead-ends before finding the
+        end node.
+        """
+
+        if self._is_explored:
+            self._reset_explored_nodes()
+
+        for node in self._node_list:
+            node.weight = self.radial_distance(node, self._end)
+
+        timer = time()
+        frontier = [self._start]
+        self._is_explored, has_end = True, False
+
+        self._log("[RS] Initial frontier:", frontier)
+
+        while len(frontier) >= 1 and not has_end:
+            self._explored_nodes.append(node := frontier.pop())
+            if node.state != -10:
+                node.set_state(2)
+
+            self._log("[RS] Selected node:", node)
+            self._log(f"[RS] Updated display:\n\n{self.ascii()}")
+
+            neighbors = [
+                node for node in self._get_neighbors(node)
+                if node.state in (1, 10)
+            ]
+
+            for neighbor in neighbors:
+                neighbor.set_parent(node)
+
+                if neighbor.state == self._end.state:
+                    self._explored_nodes.append(self._end)
+                    has_end = True
+
+                    self._log("[RS] Search time:", f"{(time() - timer):.5f}s.")
+                    break
+
+            self._log("[RS] Neighbors:", neighbors, indentation=1)
+
+            frontier.extend(neighbors)
+            frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
+
+            self._log("[RS] Updated frontier:", frontier)
+
+        self._count["explored"] = len(self._explored_nodes)
+        self._set_node_color()
+        self._get_optimal_path()
+        return has_end
+
+
+class Maze(MazeBase, Search):
     """Represents a maze object.
 
     Contains methods for maze generation and exploration, as well as methods
@@ -420,251 +669,6 @@ class Maze(MazeBase):
         self._log("[PATH GENERATOR] Generation time:",
                   f"{(time() - timer):.5f}s.")
         self._log(f"Display:\n{str(self)}", indentation=1)
-
-    @staticmethod
-    def manhattan_distance(start: Node, end: Node) -> int:
-        """Returns the manhattan_distance distance between two nodes (sum of
-        the absolute cartesian coordinates difference between two nodes).
-
-        Parameters:
-        -----------
-         - start : Node
-            The starting node.
-         - end : Node
-            The ending node.
-        """
-
-        return abs(start.x - end.x) + abs(start.y - end.y)
-
-    @staticmethod
-    def radial_distance(start: Node, end: Node) -> float:
-        """Returns the radial distance distance between two nodes (square root
-        of the sum of each node's coordinates squared).
-
-        Parameters
-        ----------
-         - start : Node
-            The starting node.
-         - end : Node
-            The ending node.
-        """
-
-        return ((start.x - end.x) ** 2 + (start.y - end.y) ** 2) ** .5
-
-    def depth_first_search(self) -> bool:
-        """Depth-First Search method.
-
-        Uses StackFrontier data structure, returning the last added node in
-        the first place. This causes the algorithm to explore a path until
-        it reaches a dead end, then backtracks to the last node that has
-        unexplored neighbors and repeats the process.
-        """
-
-        if self._is_explored:
-            self._reset_explored_nodes()
-
-        timer = time()
-        frontier = StackFrontier()
-        frontier.add(self._start)
-        self._is_explored, has_end = True, False
-
-        self._log("[DFS] Initial frontier:", frontier)
-
-        while not frontier.is_empty() and not has_end:
-            self._explored_nodes.append(node := frontier.remove())
-            if node.state != -10:
-                node.set_state(2)
-
-            self._log("[DFS] Selected node:", node)
-            self._log(f"[DFS] Updated display:\n\n{self.ascii()}")
-
-            neighbors = [
-                node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
-            ]
-
-            for neighbor in neighbors:
-                neighbor.set_parent(node)
-
-                if neighbor.state == self._end.state:
-                    self._explored_nodes.append(self._end)
-                    has_end = True
-
-                    self._log("[DFS] Search time:", f"{(time() - timer):.5}s.")
-                    break
-
-            frontier.add(neighbors)
-
-            self._log("[DFS] Updated frontier:", frontier)
-
-        self._count["explored"] = len(self._explored_nodes)
-        self._set_node_color()
-        self._get_optimal_path()
-        return has_end
-
-    def breadth_first_search(self) -> bool:
-        """Breadth-First Search method.
-
-        Uses QueueFrontier data structure, returning the first added node in
-        the first place. This causes the algorithm to explore all possible
-        paths simultaneously, taking more time to find the optimal path, but
-        preventing dead-end search processes.
-        """
-
-        if self._is_explored:
-            self._reset_explored_nodes()
-
-        timer = time()
-        frontier = QueueFrontier()
-        frontier.add(self._start)
-        self._is_explored, has_end = True, False
-
-        self._log("[BFS] Initial frontier:", frontier)
-
-        while not frontier.is_empty() and not has_end:
-            self._explored_nodes.append(node := frontier.remove())
-            if node.state != -10:
-                node.set_state(2)
-
-            self._log("[BFS] Selected node:", node)
-            self._log(f"[BFS] Updated display:\n\n{self.ascii()}")
-
-            neighbors = [
-                node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
-            ]
-
-            for neighbor in neighbors:
-                neighbor.set_parent(node)
-
-                if neighbor.state == self._end.state:
-                    self._explored_nodes.append(self._end)
-                    has_end = True
-
-                    self._log("[BFS] Search time:", f"{(time() - timer):.5}s.")
-                    break
-
-            frontier.add(neighbors)
-
-            self._log("[BFS] Updated frontier:", frontier)
-
-        self._count["explored"] = len(self._explored_nodes)
-        self._set_node_color()
-        self._get_optimal_path()
-        return has_end
-
-    def greedy_best_first_search(self) -> bool:
-        """Greedy Best-First Search method.
-
-        Uses the manhattan distance heuristic to find the path that is closest
-        to the end, yet it doesn't guarantee the optimal path. This often
-        causes the algorithm to search several dead-ends before finding the
-        end node.
-        """
-
-        if self._is_explored:
-            self._reset_explored_nodes()
-
-        for node in self._node_list:
-            node.weight = self.manhattan_distance(node, self._end)
-
-        timer = time()
-        frontier = [self._start]
-        self._is_explored, has_end = True, False
-
-        self._log("[GBFS] Initial frontier:", frontier)
-
-        while len(frontier) >= 1 and not has_end:
-            self._explored_nodes.append(node := frontier.pop())
-            if node.state != -10:
-                node.set_state(2)
-
-            self._log("[GBFS] Selected node:", node)
-            self._log(f"[GBFS] Updated display:\n\n{self.ascii()}")
-
-            neighbors = [
-                node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
-            ]
-
-            for neighbor in neighbors:
-                neighbor.set_parent(node)
-
-                if neighbor.state == self._end.state:
-                    self._explored_nodes.append(self._end)
-                    has_end = True
-
-                    self._log("[GBFS] Search time:",
-                              f"{(time() - timer):.5f}s.")
-                    break
-
-            self._log("[GBFS] Neighbors:", neighbors, indentation=1)
-
-            frontier.extend(neighbors)
-            frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
-
-            self._log("[GBFS] Updated frontier:", frontier)
-
-        self._count["explored"] = len(self._explored_nodes)
-        self._set_node_color()
-        self._get_optimal_path()
-        return has_end
-
-    def radial_search(self) -> bool:
-        """Radial Search method.
-
-        Uses the radial distance heuristic to find the path that is closest
-        to the end, yet it doesn't guarantee the optimal path. This often
-        causes the algorithm to search several dead-ends before finding the
-        end node.
-        """
-
-        if self._is_explored:
-            self._reset_explored_nodes()
-
-        for node in self._node_list:
-            node.weight = self.radial_distance(node, self._end)
-
-        timer = time()
-        frontier = [self._start]
-        self._is_explored, has_end = True, False
-
-        self._log("[RS] Initial frontier:", frontier)
-
-        while len(frontier) >= 1 and not has_end:
-            self._explored_nodes.append(node := frontier.pop())
-            if node.state != -10:
-                node.set_state(2)
-
-            self._log("[RS] Selected node:", node)
-            self._log(f"[RS] Updated display:\n\n{self.ascii()}")
-
-            neighbors = [
-                node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
-            ]
-
-            for neighbor in neighbors:
-                neighbor.set_parent(node)
-
-                if neighbor.state == self._end.state:
-                    self._explored_nodes.append(self._end)
-                    has_end = True
-
-                    self._log("[RS] Search time:", f"{(time() - timer):.5f}s.")
-                    break
-
-            self._log("[RS] Neighbors:", neighbors, indentation=1)
-
-            frontier.extend(neighbors)
-            frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
-
-            self._log("[RS] Updated frontier:", frontier)
-
-        self._count["explored"] = len(self._explored_nodes)
-        self._set_node_color()
-        self._get_optimal_path()
-        return has_end
 
     def ascii(self) -> str:
         """Returns an ASCII representation of the maze array.
