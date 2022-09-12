@@ -346,11 +346,11 @@ class Maze(MazeBase):
             self._log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
 
             self._end = path_tiles[0]
-            top_distance = self._manhattan_distance(self._end, path_tiles[0])
+            top_distance = self.manhattan_distance(self._end, path_tiles[0])
 
             for tile in path_tiles:
-                if self._manhattan_distance(self._start, tile) > top_distance:
-                    top_distance = self._manhattan_distance(self._start, tile)
+                if self.manhattan_distance(self._start, tile) > top_distance:
+                    top_distance = self.manhattan_distance(self._start, tile)
                     self._end = tile
 
             self._end.set_state(10)
@@ -407,36 +407,43 @@ class Maze(MazeBase):
         self._log(f"Display:\n{str(self)}", indentation=1)
 
     @staticmethod
-    def _manhattan_distance(start: Node, end: Node) -> int:
-        """Returns the _manhattan_distance distance between two nodes (sum of
+    def manhattan_distance(start: Node, end: Node) -> int:
+        """Returns the manhattan_distance distance between two nodes (sum of
         the absolute cartesian coordinates difference between two nodes).
 
-        Parameters
-        ----------
-        start : Node
-                The starting node.
-        end : Node
-                The ending node.
+        Parameters:
+        -----------
+         - start : Node
+            The starting node.
+         - end : Node
+            The ending node.
         """
 
         return abs(start.x - end.x) + abs(start.y - end.y)
 
     @staticmethod
-    def _radial_distance(start: Node, end: Node) -> float:
+    def radial_distance(start: Node, end: Node) -> float:
         """Returns the radial distance distance between two nodes (square root
         of the sum of each node's coordinates squared).
 
         Parameters
         ----------
-        start : Node
-                The starting node.
-        end : Node
-                The ending node.
+         - start : Node
+            The starting node.
+         - end : Node
+            The ending node.
         """
+
         return ((start.x - end.x) ** 2 + (start.y - end.y) ** 2) ** .5
 
     def depth_first_search(self) -> bool:
-        """Depth-First Search method."""
+        """Depth-First Search method.
+
+        Uses StackFrontier data structure, returning the last added node in
+        the first place. This causes the algorithm to explore a path until
+        it reaches a dead end, then backtracks to the last node that has
+        unexplored neighbors and repeats the process.
+        """
 
         if self._is_explored:
             self._reset_explored_nodes()
@@ -481,7 +488,13 @@ class Maze(MazeBase):
         return has_end
 
     def breadth_first_search(self) -> bool:
-        """Breadth-First Search method."""
+        """Breadth-First Search method.
+
+        Uses QueueFrontier data structure, returning the first added node in
+        the first place. This causes the algorithm to explore all possible
+        paths simultaneously, taking more time to find the optimal path, but
+        preventing dead-end search processes.
+        """
 
         if self._is_explored:
             self._reset_explored_nodes()
@@ -526,13 +539,19 @@ class Maze(MazeBase):
         return has_end
 
     def greedy_best_first_search(self) -> bool:
-        """Greedy Best-First Search method."""
+        """Greedy Best-First Search method.
+
+        Uses the manhattan distance heuristic to find the path that is closest
+        to the end, yet it doesn't guarantee the optimal path. This often
+        causes the algorithm to search several dead-ends before finding the
+        end node.
+        """
 
         if self._is_explored:
             self._reset_explored_nodes()
 
         for node in self._node_list:
-            node.weight = self._manhattan_distance(node, self._end)
+            node.weight = self.manhattan_distance(node, self._end)
 
         timer = time()
         frontier = [self._start]
@@ -577,13 +596,19 @@ class Maze(MazeBase):
         return has_end
 
     def radial_search(self) -> bool:
-        """Radial Search method."""
+        """Radial Search method.
+
+        Uses the radial distance heuristic to find the path that is closest
+        to the end, yet it doesn't guarantee the optimal path. This often
+        causes the algorithm to search several dead-ends before finding the
+        end node.
+        """
 
         if self._is_explored:
             self._reset_explored_nodes()
 
         for node in self._node_list:
-            node.weight = self._radial_distance(node, self._end)
+            node.weight = self.radial_distance(node, self._end)
 
         timer = time()
         frontier = [self._start]
@@ -627,30 +652,32 @@ class Maze(MazeBase):
         return has_end
 
     def ascii(self) -> str:
-        """Returns an ASCII representation of the maze array with each node's
-        corresponding character.
+        """Returns an ASCII representation of the maze array.
+
+        Each node is represented by a character, given its state.
         """
+
         return (f"╔═{2 * '═' * self._width}╗\n"
-                + ''.join(
-                    ''.join(
-                        ['║ ' + ''.join(
-                                [node.ascii for node in row]
-                        ) + '║\n']
-                    ) for row in self._node_matrix
-                ) + f"╚═{2 * '═' * self._width}╝"
-                )
+            + ''.join(
+                ''.join(
+                    ['║ ' + ''.join(
+                            [node.ascii for node in row]
+                    ) + '║\n']
+                ) for row in self._node_matrix
+            ) + f"╚═{2 * '═' * self._width}╝"
+        )
 
-    def image(self, *, show_image=True, save_image=False) -> str:
-        """Generates an image from the maze array, coloring each
-        node in a different way.
+    def image(self, show_image=True, save_image=False) -> str:
+        """Generates an image from the maze array with colored nodes.
 
-        Parameters
-        ----------
-        show_image : bool
-                Determines whether or not the image should be displayed.
-        save_image : bool
-                Determines whether or not the image should be saved.
+        Parameters:
+        -----------
+         - show_image : bool
+            Determines whether or not the image should be displayed.
+         - save_image : bool
+            Determines whether or not the image should be saved.
         """
+
         # Dimensions and canvas definition:
         cell, border = 50, 8
 
