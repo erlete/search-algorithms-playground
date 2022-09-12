@@ -92,12 +92,9 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
         y_axis_2.append(time_2 - time_1)
         y_axis_3.append(time_3 - time_2)
 
-    curve_1, = plt.plot(x_axis, y_axis_1, color="black",
-                        label="Path generation")
-    curve_2, = plt.plot(x_axis, y_axis_2, color="orange",
-                        label="Depth-First Search")
-    curve_3, = plt.plot(x_axis, y_axis_3, color="red",
-                        label="Greedy Best-First Search")
+    plt.plot(x_axis, y_axis_1, color="black", label="Path generation")
+    plt.plot(x_axis, y_axis_2, color="orange", label="Depth-First Search")
+    plt.plot(x_axis, y_axis_3, color="red", label="Greedy Best-First Search")
 
     plt.title("Elapsed times comparison")
     plt.xlabel("Order of dimensions")
@@ -126,10 +123,8 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
         y_axis_1.append(time_1 - time_0)
         y_axis_2.append(time_2 - time_1)
 
-    curve_1, = plt.plot(x_axis, y_axis_1, color="orange",
-                        label="Depth-First Search")
-    curve_2, = plt.plot(x_axis, y_axis_2, color="red",
-                        label="Greedy Best-First Search")
+    plt.plot(x_axis, y_axis_1, color="orange", label="Depth-First Search")
+    plt.plot(x_axis, y_axis_2, color="red", label="Greedy Best-First Search")
 
     plt.title("Elapsed times comparison")
     plt.xlabel("Order of dimensions")
