@@ -1,11 +1,26 @@
+"""Container module for the maze classes.
+
+This module contains two classes: one of them is a generic Maze interface that
+contains basic attributes and methods, while the other is a specific maze
+implementation that uses a 2D array as a data structure and contains methods
+that allow path generation and searching.
+
+Author:
+-------
+ - Paulo Sánchez (@erlete)
+"""
+
+
 from datetime import datetime
 from os import mkdir, path
 from random import randint, randrange, sample
 from time import time
+
 from PIL import Image, ImageDraw
+
+from utils.frontier import QueueFrontier, StackFrontier
 from utils.node import Node
 
-from utils.frontier import StackFrontier, QueueFrontier
 
 class MazeBase:
     """Contains basic methods and attributes related to maze generation.
@@ -658,14 +673,14 @@ class Maze(MazeBase):
         """
 
         return (f"╔═{2 * '═' * self._width}╗\n"
-            + ''.join(
-                ''.join(
-                    ['║ ' + ''.join(
+                + ''.join(
+                    ''.join(
+                        ['║ ' + ''.join(
                             [node.ascii for node in row]
-                    ) + '║\n']
-                ) for row in self._node_matrix
-            ) + f"╚═{2 * '═' * self._width}╝"
-        )
+                        ) + '║\n']
+                    ) for row in self._node_matrix
+                ) + f"╚═{2 * '═' * self._width}╝"
+                )
 
     def image(self, show_image=True, save_image=False) -> str:
         """Generates an image from the maze array with colored nodes.
