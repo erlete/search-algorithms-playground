@@ -6,50 +6,52 @@ import matplotlib.pyplot as plt
 
 
 CONSTANTS = {
-    "dimensions": (20, 20), "logger": 1, "cycles": 50, "show_image": 1,
-    "save_image": 0
+    "dimensions": (20, 20),
+    "cycles": 50,
+    "show_image": True,
+    "save_image": False
 }
 
 
-def test_1(size=CONSTANTS["dimensions"], logger=CONSTANTS["logger"]):
+def test_1(size=CONSTANTS["dimensions"]):
     """Instance creation test with ASCII representation."""
 
     print("\nTEST 1")
 
-    obj = Maze(size, logger=logger)
+    obj = Maze(size)
     print(obj)
 
 
-def test_2(size=CONSTANTS["dimensions"], logger=CONSTANTS["logger"]):
+def test_2(size=CONSTANTS["dimensions"]):
     """Path generation test with ASCII representation."""
 
     print("\nTEST 2")
 
-    obj = Maze(size, logger=logger)
+    obj = Maze(size)
     obj._generate_path()
 
     print(obj.ascii())
 
 
 def test_3(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-           save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
+           save_image=CONSTANTS["save_image"]):
     """Path generation test with image representation."""
 
     print("\nTEST 3")
 
-    obj = Maze(size, logger=logger)
+    obj = Maze(size)
     obj._generate_path()
 
     obj.image()
 
 
 def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-           save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
+           save_image=CONSTANTS["save_image"]):
     """Path solving (DFS) with ASCII and image representation"""
 
     print("\nTEST 4")
 
-    obj = Maze(size, logger=logger)
+    obj = Maze(size)
     obj._generate_path()
     obj.depth_first_search()
 
@@ -58,12 +60,12 @@ def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
 
 
 def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-           save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
+           save_image=CONSTANTS["save_image"]):
     """Path solving (GBFS) with ASCII and image representation"""
 
     print("\nTEST 5")
 
-    obj = Maze(size, logger=logger)
+    obj = Maze(size)
     obj._generate_path()
     obj.greedy_best_first_search()
 
@@ -71,14 +73,14 @@ def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
     obj.image()
 
 
-def test_6(cycles=CONSTANTS["cycles"], logger=False):
+def test_6(cycles=CONSTANTS["cycles"]):
     """Visual benchmarking utility (path generation vs search methods)."""
 
     x_axis = range(4, cycles)
     y_axis_1, y_axis_2, y_axis_3 = [], [], []
 
     for iteration in x_axis:
-        obj = Maze((iteration, iteration), logger=logger)
+        obj = Maze((iteration, iteration))
 
         time_0 = time()
         obj._generate_path()
@@ -104,14 +106,14 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
     plt.show()
 
 
-def test_6(cycles=CONSTANTS["cycles"], logger=False):
+def test_6(cycles=CONSTANTS["cycles"]):
     """Visual benchmarking utility (search methods)."""
 
     x_axis = range(4, cycles)
     y_axis_1, y_axis_2 = [], []
 
     for iteration in x_axis:
-        obj = Maze((iteration, iteration), logger=logger)
+        obj = Maze((iteration, iteration))
         obj._generate_path()
 
         time_0 = time()
