@@ -47,10 +47,10 @@ class Frontier:
         return len(self._nodes) == 0
 
     def __str__(self):
-        return f"Frontier({self._nodes})"
+        return f"<Frontier object with {len(self._nodes)} nodes>"
 
     def __repr__(self):
-        return str(self._nodes)
+        return f"Frontier({self._nodes})"
 
 
 class StackFrontier(Frontier):
