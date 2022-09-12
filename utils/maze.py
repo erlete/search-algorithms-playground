@@ -78,7 +78,9 @@ class MazeBase:
     def __init__(self, dimensions):
         self.dimensions = dimensions
 
-        # Maze generation process:
+        # Note: the row and column indices are swapped due to the fact that
+        #   each column represents an x-coordinate and each row represents a
+        #   y-coordinate.
         self._node_matrix = [
             [Node(column, row) for column in range(self._width)]
             for row in range(self._height)
@@ -89,10 +91,11 @@ class MazeBase:
         self._start = self._node_matrix[
             randrange(0, self._height)
         ][randrange(0, self._width)]
-        self._start.set_state(-10)
-        self._end = Node(0, 0)
+        self._end = Node(0, 0)  # TODO: check if this is necessary.
 
-        # Maze statistics initialization:
+        # TODO: maybe add a _set_endpoints() method?
+        self._start.set_state(-10)
+
         self._explored_nodes, self.optimal_path = [], []
         self._is_generated = self._is_explored = False
         self._count = {
@@ -153,14 +156,15 @@ class Search:
         frontier.add(self._start)
         self._is_explored, has_end = True, False
 
-        while not frontier.is_empty() and not has_end:
+        while not (frontier.is_empty() or has_end):
             self._explored_nodes.append(node := frontier.remove())
+
             if node.state != -10:
                 node.set_state(2)
 
             neighbors = [
                 node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
+                if node.state in (1, 10)  # If node is unexplored or the end.
             ]
 
             for neighbor in neighbors:
@@ -169,7 +173,6 @@ class Search:
                 if neighbor.state == self._end.state:
                     self._explored_nodes.append(self._end)
                     has_end = True
-
                     break
 
             frontier.add(neighbors)
@@ -195,14 +198,15 @@ class Search:
         frontier.add(self._start)
         self._is_explored, has_end = True, False
 
-        while not frontier.is_empty() and not has_end:
+        while not (frontier.is_empty() or has_end):
             self._explored_nodes.append(node := frontier.remove())
+
             if node.state != -10:
                 node.set_state(2)
 
             neighbors = [
                 node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
+                if node.state in (1, 10)  # If node is unexplored or the end.
             ]
 
             for neighbor in neighbors:
@@ -232,20 +236,22 @@ class Search:
         if self._is_explored:
             self._reset_explored_nodes()
 
+        # Computes the manhattan distance for each node in the maze:
         for node in self._node_list:
             node.weight = self.manhattan_distance(node, self._end)
 
-        frontier = [self._start]
+        frontier = [self._start]  # TODO: maybe use a PriorityQueueFrontier?
         self._is_explored, has_end = True, False
 
         while len(frontier) >= 1 and not has_end:
             self._explored_nodes.append(node := frontier.pop())
+
             if node.state != -10:
                 node.set_state(2)
 
             neighbors = [
                 node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
+                if node.state in (1, 10)  # If node is unexplored or the end.
             ]
 
             for neighbor in neighbors:
@@ -254,10 +260,10 @@ class Search:
                 if neighbor.state == self._end.state:
                     self._explored_nodes.append(self._end)
                     has_end = True
-
                     break
 
             frontier.extend(neighbors)
+            # Sort nodes by their weight (manhattan distance to the end):
             frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
 
         self._count["explored"] = len(self._explored_nodes)
@@ -280,17 +286,18 @@ class Search:
         for node in self._node_list:
             node.weight = self.radial_distance(node, self._end)
 
-        frontier = [self._start]
+        frontier = [self._start]  # TODO: maybe use a PriorityQueueFrontier?
         self._is_explored, has_end = True, False
 
         while len(frontier) >= 1 and not has_end:
             self._explored_nodes.append(node := frontier.pop())
+
             if node.state != -10:
                 node.set_state(2)
 
             neighbors = [
                 node for node in self._get_neighbors(node)
-                if node.state in (1, 10)
+                if node.state in (1, 10)  # If node is unexplored or the end.
             ]
 
             for neighbor in neighbors:
@@ -299,10 +306,10 @@ class Search:
                 if neighbor.state == self._end.state:
                     self._explored_nodes.append(self._end)
                     has_end = True
-
                     break
 
             frontier.extend(neighbors)
+            # Sort nodes by their weight (radial distance to the end):
             frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
 
         self._count["explored"] = len(self._explored_nodes)
@@ -327,13 +334,8 @@ class Maze(MazeBase, Search):
 
     def __init__(self, dimensions):
 
+        # Initialize basic maze attributes and generate path:
         super().__init__(dimensions)
-
-        # Image settings:
-
-        # Images might be exported several times per object creation, hence
-        #	the necessity of making their identifier variable (in 'Maze.image').
-
         self._generate_path()
 
     def _set_node_color(self):
@@ -362,8 +364,13 @@ class Maze(MazeBase, Search):
                 ))
 
     def _reset_explored_nodes(self) -> None:
-        """Resets the count of explored nodes in the maze."""
+        """Converts all explored nodes back to unexplored nodes.
 
+        This method also converts all optimal path nodes back to unexplored
+        and resets the corresponding node counters.
+        """
+
+        # Reverts the state of every explored node to unexplored:
         for node in self._node_list:
             if node.state == 2:
                 node.set_state(1)
@@ -373,15 +380,20 @@ class Maze(MazeBase, Search):
         self._explored_nodes.clear()
 
     def _reset_optimal_nodes(self) -> None:
-        """Resets the count of optimal path nodes in the maze."""
+        """Converts all optimal nodes back to unexplored nodes."""
 
+        # Reverts the state of every optimal path node to unexplored:
         for node in self._node_list:
             if node.state == 3:
                 node.set_state(1)
 
     def _reset_generated_nodes(self) -> None:
-        """Resets the count of generated nodes in the maze."""
+        """Converts every node to a wall.
 
+        This method also resets the path node counter.
+        """
+
+        # Reverts the state of every node to a wall one:
         for node in self._node_list:
             if node.state != -10:
                 node.set_state(0)
@@ -413,14 +425,14 @@ class Maze(MazeBase, Search):
             (node.x - 1, node.y)   # Left
         )
 
+        # Gets every neighbor node that is between the maze's boundaries:
         nodes = [
             self._node_matrix[coord[1]][coord[0]] for coord in coordinates
             if 0 <= coord[0] < self._width and 0 <= coord[1] < self._height
         ]
 
-        nodes = sample(nodes, len(nodes))
+        return sample(nodes, len(nodes))
 
-        return nodes
 
     def _get_square_neighbors(self, node: Node) -> list:
         """Returns square neighbors of a node.
@@ -435,16 +447,17 @@ class Maze(MazeBase, Search):
         """
 
         coordinates = (
-            (node.x - 1, node.y - 1),
-            (node.x, node.y - 1),
-            (node.x + 1, node.y - 1),
-            (node.x + 1, node.y),
-            (node.x + 1, node.y + 1),
-            (node.x, node.y + 1),
-            (node.x - 1, node.y + 1),
-            (node.x - 1, node.y)
+            (node.x - 1, node.y - 1),  # Top-left
+            (node.x, node.y - 1),      # Top
+            (node.x + 1, node.y - 1),  # Top-right
+            (node.x + 1, node.y),      # Right
+            (node.x + 1, node.y + 1),  # Bottom-right
+            (node.x, node.y + 1),      # Bottom
+            (node.x - 1, node.y + 1),  # Bottom-left
+            (node.x - 1, node.y)       # Left
         )
 
+        # Gets every neighbor node that is between the maze's boundaries:
         nodes = [
             self._node_matrix[coord[1]][coord[0]] for coord in coordinates
             if 0 <= coord[0] < self._width and 0 <= coord[1] < self._height
@@ -460,6 +473,7 @@ class Maze(MazeBase, Search):
         so the process stops when the start is reached.
         """
 
+        # FIXME: add end node existence check.
         if self._end in self._explored_nodes:
             self.optimal_path = [self._end]
             node = self._end.parent
@@ -473,15 +487,24 @@ class Maze(MazeBase, Search):
             self.optimal_path.reverse()
 
     def _randomize_divergence(self, nodes: list) -> list:
-        """Randomizes the divergence during path generation process."""
+        """Randomizes the divergence during path generation process.
+
+        Note:
+        -----
+        I honestly do not have a clue about how or why this works, but it
+        does. I just know that it works. I'm not even sure if it's the best
+        way to do it, but it works. I'm not touching it.
+        """
 
         bias = round(max(self._width, self._height) * (1 / 4))
-        chance = randint(bias if bias <= len(
-            nodes) else len(nodes), len(nodes))
-        nodes = sample(nodes, chance if 0 <= chance <=
-                       len(nodes) else .66 * len(nodes))
 
-        return nodes
+        chance = randint(
+            bias if bias <= len(nodes) else len(nodes), len(nodes)
+        )
+
+        return sample(
+            nodes, chance if 0 <= chance <= len(nodes) else .66 * len(nodes)
+        )
 
     def _set_end_node(self, probability=1) -> None:
         """Sets the location of the end node.
@@ -507,7 +530,6 @@ class Maze(MazeBase, Search):
                     self._end = tile
 
             self._end.set_state(10)
-
 
     def _generate_path(self) -> None:
         """Generates a random path for the base array."""
@@ -541,13 +563,13 @@ class Maze(MazeBase, Search):
         self._set_end_node()
         self._is_generated = True
 
-
     def ascii(self) -> str:
         """Returns an ASCII representation of the maze array.
 
         Each node is represented by a character, given its state.
         """
 
+        # TODO: maybe refactor this monstruosity?
         return (f"╔═{2 * '═' * self._width}╗\n" + ''.join(
             ''.join(
                 ['║ ' + ''.join(
@@ -616,15 +638,18 @@ class Maze(MazeBase, Search):
             image.show()
 
         if save_image:
+
+            # Ensure that the target directory exists:
             if not path.isdir(f"./{self.IMAGE_DIRECTORY}"):
                 mkdir(f"./{self.IMAGE_DIRECTORY}")
 
+            # Set the name of the image and save it:
             self._image_file = f"./{self.IMAGE_DIRECTORY}/{self.IMAGE_PREFIX}" \
                 + f"_{''.join(str(time()).split('.'))}.{self.IMAGE_FORMAT}"
 
             image.save(self._image_file)
 
-            return self._image_file  # Image file path.
+            return self._image_file  # Returns the image file path.
 
         return ''  # If no image is saved, no file path is returned.
 
