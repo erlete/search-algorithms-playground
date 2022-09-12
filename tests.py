@@ -1,8 +1,9 @@
 """Various tests for the 'main.py' file."""
 
-from main import Maze, Node
+from utils.maze import Maze
 from time import time
 import matplotlib.pyplot as plt
+
 
 CONSTANTS = {
     "dimensions": (20, 20), "logger": 1, "cycles": 50, "show_image": 1,
@@ -31,7 +32,7 @@ def test_2(size=CONSTANTS["dimensions"], logger=CONSTANTS["logger"]):
 
 
 def test_3(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-        save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
+           save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
     """Path generation test with image representation."""
 
     print("\nTEST 3")
@@ -43,7 +44,7 @@ def test_3(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
 
 
 def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-        save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
+           save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
     """Path solving (DFS) with ASCII and image representation"""
 
     print("\nTEST 4")
@@ -57,7 +58,7 @@ def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
 
 
 def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-        save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
+           save_image=CONSTANTS["save_image"], logger=CONSTANTS["logger"]):
     """Path solving (GBFS) with ASCII and image representation"""
 
     print("\nTEST 5")
@@ -91,9 +92,12 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
         y_axis_2.append(time_2 - time_1)
         y_axis_3.append(time_3 - time_2)
 
-    curve_1, = plt.plot(x_axis, y_axis_1, color="black", label="Path generation")
-    curve_2, = plt.plot(x_axis, y_axis_2, color="orange", label="Depth-First Search")
-    curve_3, = plt.plot(x_axis, y_axis_3, color="red", label="Greedy Best-First Search")
+    curve_1, = plt.plot(x_axis, y_axis_1, color="black",
+                        label="Path generation")
+    curve_2, = plt.plot(x_axis, y_axis_2, color="orange",
+                        label="Depth-First Search")
+    curve_3, = plt.plot(x_axis, y_axis_3, color="red",
+                        label="Greedy Best-First Search")
 
     plt.title("Elapsed times comparison")
     plt.xlabel("Order of dimensions")
@@ -122,8 +126,10 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
         y_axis_1.append(time_1 - time_0)
         y_axis_2.append(time_2 - time_1)
 
-    curve_1, = plt.plot(x_axis, y_axis_1, color="orange", label="Depth-First Search")
-    curve_2, = plt.plot(x_axis, y_axis_2, color="red", label="Greedy Best-First Search")
+    curve_1, = plt.plot(x_axis, y_axis_1, color="orange",
+                        label="Depth-First Search")
+    curve_2, = plt.plot(x_axis, y_axis_2, color="red",
+                        label="Greedy Best-First Search")
 
     plt.title("Elapsed times comparison")
     plt.xlabel("Order of dimensions")
