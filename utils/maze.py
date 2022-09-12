@@ -8,16 +8,28 @@ from utils.node import Node
 from utils.frontier import StackFrontier, QueueFrontier
 
 class MazeBase:
-    """Contains the methods and attributes related to maze generation.
+    """Contains basic methods and attributes related to maze generation.
+
+    This class defines several properties such as width, height, start and end
+    nodes for the maze generation process.
+
+    Parameters:
+    -----------
+     - dimensions: int, tuple
+        The dimensions of the maze. If an integer is passed, the maze will be
+        square. If a tuple is passed, the first element will be the width and
+        the second element will be the height.
+     - logger: bool
+        If True, the class will print information about the maze generation
     """
 
     @property
-    def x(self):
-        return self._x
+    def width(self):
+        return self._width
 
     @property
-    def y(self):
-        return self._y
+    def height(self):
+        return self._height
 
     @property
     def dimensions(self):
@@ -44,23 +56,22 @@ class MazeBase:
             raise TypeError(
                 "'dimensions' must be an integer or a tuple of them.")
 
-        self._x, self._y = self._dimensions  # Unpacks the tuple.
+        self._width, self._height = self._dimensions  # Unpacks the tuple.
 
     def __init__(self, dimensions, logger=False):
-
         self.dimensions = dimensions
 
         # Maze generation process:
         self._node_matrix = [
-            [Node(column, row) for column in range(self._x)]
-            for row in range(self._y)
+            [Node(column, row) for column in range(self._width)]
+            for row in range(self._height)
         ]
 
         self._node_list = [node for row in self._node_matrix for node in row]
 
         self._start = self._node_matrix[
-            randrange(0, self._y)
-        ][randrange(0, self._x)]
+            randrange(0, self._height)
+        ][randrange(0, self._width)]
         self._start.set_state(-10)
         self._end = Node(0, 0)
 
@@ -70,23 +81,24 @@ class MazeBase:
         self._count = {
             "path": 0,
             "explored": 0,
-            "total": self._x * self._y
+            "total": self._width * self._height
         }
 
 
 class Maze(MazeBase):
-    """The base class for the maze generation and representation. Provides
-    with generator, solver and display methods for node treatment and
-    arrangement.
+    """Represents a maze object.
 
-    Parameters
-    ----------
-    dimensions : int | tuple[int, int]
-        Integer or 2-tuple of integers defining the X and Y dimensions (width
-        and height) of the node array.
-    logger : bool
-        Flag that determines whether or not the processes performed by the
-        class' methods should be logged.
+    Contains methods for maze generation and exploration, as well as methods
+    for exporting the maze to an image file and logging the process.
+
+    Parameters:
+    -----------
+     - dimensions: int, tuple
+        The dimensions of the maze. If an integer is passed, the maze will be
+        square. If a tuple is passed, the first element will be the width and
+        the second element will be the height.
+     - logger: bool
+        If True, the class will print information about the maze generation
     """
 
     def __init__(self, dimensions, logger=False):
@@ -150,8 +162,12 @@ class Maze(MazeBase):
         return None
 
     def _set_node_color(self):
-        """TODO: add docstring"""
+        """Automatically sets the color of all explored nodes.
 
+        The color is set based on the count of currently explored nodes and
+        the color difference between the endpoints."""
+
+        # Set the color difference between each node:
         differential = (
             (self._end.color[0] - self._start.color[0]) /
             self._count["explored"],
@@ -161,6 +177,7 @@ class Maze(MazeBase):
             self._count["explored"],
         )
 
+        # Apply the color to each explored node:
         for index, node in enumerate(self._explored_nodes):
             if node.state not in (self._start.state, self._end.state):
                 node.set_color((
@@ -170,7 +187,7 @@ class Maze(MazeBase):
                 ))
 
     def _reset_explored_nodes(self) -> None:
-        """TODO: add docstring"""
+        """Resets the count of explored nodes in the maze."""
 
         for node in self._node_list:
             if node.state == 2:
@@ -181,14 +198,14 @@ class Maze(MazeBase):
         self._explored_nodes.clear()
 
     def _reset_optimal_nodes(self) -> None:
-        """TODO: add docstring"""
+        """Resets the count of optimal path nodes in the maze."""
 
         for node in self._node_list:
             if node.state == 3:
                 node.set_state(1)
 
     def _reset_generated_nodes(self) -> None:
-        """TODO: add docstring"""
+        """Resets the count of generated nodes in the maze."""
 
         for node in self._node_list:
             if node.state != -10:
@@ -197,11 +214,21 @@ class Maze(MazeBase):
         self._count["path"] = 0
 
     def _get_neighbors(self, node: Node) -> list:
-        """Gets the nodes immediately next to the given coordinates from
-        `self.node_matrix` (top, right, bottom, left).
+        """Returns immediate neighbors of a node.
 
+        Gets the nodes immediately next to the given coordinates (top, right,
+        bottom, left). If the node is on the edge of the maze, the neighbor
+        will be None.
+
+        Note:
+        -----
         The order in which the neighbor nodes are returned is set in a random
-        way, in order to prevent data pre-setting.
+        way in order to prevent data pre-setting.
+
+        Parameters:
+        -----------
+         - node: Node
+            The node whose neighbors will be returned.
         """
 
         coordinates = (
@@ -218,8 +245,9 @@ class Maze(MazeBase):
 
         nodes = [
             self._node_matrix[coord[1]][coord[0]] for coord in coordinates
-            if 0 <= coord[0] < self._x and 0 <= coord[1] < self._y
+            if 0 <= coord[0] < self._width and 0 <= coord[1] < self._height
         ]
+
         nodes = sample(nodes, len(nodes))
 
         self._log(
@@ -228,8 +256,11 @@ class Maze(MazeBase):
         return nodes
 
     def _get_square_neighbors(self, node: Node) -> list:
-        """Gets the values in the square surroundings of the given coordinates.
-        This method is used in order to prevent path mixing during generation.
+        """Returns square neighbors of a node.
+
+        Gets the nodes next to the given coordinates in a square (top-left,
+        top, top-right, right, bottom-right...). If the node is on the edge of
+        the maze, the neighbor will be None.
 
         Since the method is only used to evaluate the amount of nearby 'path'
         values near the considered node during path generation, there is no
@@ -254,7 +285,7 @@ class Maze(MazeBase):
 
         nodes = [
             self._node_matrix[coord[1]][coord[0]] for coord in coordinates
-            if 0 <= coord[0] < self._x and 0 <= coord[1] < self._y
+            if 0 <= coord[0] < self._width and 0 <= coord[1] < self._height
         ]
 
         self._log(
@@ -263,24 +294,31 @@ class Maze(MazeBase):
         return nodes
 
     def _get_optimal_path(self) -> None:
-        """TODO: add docstring"""
+        """Determines the optimal path from the end to the start node.
+
+        This process is performed by reversing the search process and
+        evaluating each node's parent. The parent of the start node is None,
+        so the process stops when the start is reached.
+        """
 
         if self._end in self._explored_nodes:
             self.optimal_path = [self._end]
             node = self._end.parent
+
             while node.parent is not None:
                 self.optimal_path.append(node)
                 node.set_state(3, set_color=False)
                 node = node.parent
+
             self.optimal_path.append(self._start)
             self.optimal_path.reverse()
 
     def _randomize_divergence(self, nodes: list) -> list:
-        """TODO: add docstring"""
+        """Randomizes the divergence during path generation process."""
 
         self._log("[CAESAR] Unfiltered:", nodes, indentation=1)
 
-        bias = round(max(self._x, self._y) * (1 / 4))
+        bias = round(max(self._width, self._height) * (1 / 4))
         chance = randint(bias if bias <= len(
             nodes) else len(nodes), len(nodes))
         nodes = sample(nodes, chance if 0 <= chance <=
@@ -290,8 +328,14 @@ class Maze(MazeBase):
 
         return nodes
 
-    def _set_end_node(self, probability=.8) -> None:
-        """TODO: add docstring"""
+    def _set_end_node(self, probability=1) -> None:
+        """Sets the location of the end node.
+
+        Parameters:
+        -----------
+         - probability: float (defaul=1)
+            The probability of the end node being set.
+        """
 
         if not 0 <= probability <= 1:
             raise TypeError("'probability' must be a float between 0 and 1.")
@@ -586,14 +630,14 @@ class Maze(MazeBase):
         """Returns an ASCII representation of the maze array with each node's
         corresponding character.
         """
-        return (f"╔═{2 * '═' * self._x}╗\n"
+        return (f"╔═{2 * '═' * self._width}╗\n"
                 + ''.join(
                     ''.join(
                         ['║ ' + ''.join(
                                 [node.ascii for node in row]
                         ) + '║\n']
                     ) for row in self._node_matrix
-                ) + f"╚═{2 * '═' * self._x}╝"
+                ) + f"╚═{2 * '═' * self._width}╝"
                 )
 
     def image(self, *, show_image=True, save_image=False) -> str:
@@ -611,7 +655,7 @@ class Maze(MazeBase):
         cell, border = 50, 8
 
         image = Image.new(
-            mode="RGB", size=(self._x * cell, self._y * cell), color="black"
+            mode="RGB", size=(self._width * cell, self._height * cell), color="black"
         )
 
         # Canvas modification:
@@ -669,4 +713,4 @@ class Maze(MazeBase):
         return ''
 
     def __repr__(self):
-        return f"<({self._x}x{self._y}) Maze instance>"
+        return f"<({self._width}x{self._height}) Maze instance>"
