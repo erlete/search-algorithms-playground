@@ -1,4 +1,5 @@
-from main import Maze, Node
+from utils.maze import Maze
+from utils.node import Node
 import matplotlib.pyplot as plt
 
 

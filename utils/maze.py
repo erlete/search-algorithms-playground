@@ -398,13 +398,14 @@ class Maze(MazeBase):
             self._reset_explored_nodes()
 
         timer = time()
-        frontier = StackFrontier(self._start)
+        frontier = StackFrontier()
+        frontier.add(self._start)
         self._is_explored, has_end = True, False
 
         self._log("[DFS] Initial frontier:", frontier)
 
         while not frontier.is_empty() and not has_end:
-            self._explored_nodes.append(node := frontier.remove_node())
+            self._explored_nodes.append(node := frontier.remove())
             if node.state != -10:
                 node.set_state(2)
 
@@ -426,7 +427,7 @@ class Maze(MazeBase):
                     self._log("[DFS] Search time:", f"{(time() - timer):.5}s.")
                     break
 
-            frontier.add_nodes(neighbors)
+            frontier.add(neighbors)
 
             self._log("[DFS] Updated frontier:", frontier)
 
@@ -442,13 +443,14 @@ class Maze(MazeBase):
             self._reset_explored_nodes()
 
         timer = time()
-        frontier = QueueFrontier(self._start)
+        frontier = QueueFrontier()
+        frontier.add(self._start)
         self._is_explored, has_end = True, False
 
         self._log("[BFS] Initial frontier:", frontier)
 
         while not frontier.is_empty() and not has_end:
-            self._explored_nodes.append(node := frontier.remove_node())
+            self._explored_nodes.append(node := frontier.remove())
             if node.state != -10:
                 node.set_state(2)
 
@@ -470,7 +472,7 @@ class Maze(MazeBase):
                     self._log("[BFS] Search time:", f"{(time() - timer):.5}s.")
                     break
 
-            frontier.add_nodes(neighbors)
+            frontier.add(neighbors)
 
             self._log("[BFS] Updated frontier:", frontier)
 
