@@ -1,6 +1,6 @@
 """Container module for the frontier classes.
 
-This module contains three classes, one of them is a generic Frontier
+This module contains three classes: one of them is a generic Frontier
 interface and the others are specific to a stack or queue data structure.
 
 Author:
@@ -13,30 +13,59 @@ from utils.node import Node
 
 
 class Frontier:
-    """Data structure that contains nodes."""
+    """Generic data structure that serves as node container.
 
-    def __init__(self, initial_node: Node):
-        self.nodes = [initial_node]
+    Contains basic methods that allow node addition and empty frontier
+    checking.
+    """
 
-    def add_nodes(self, nodes: list) -> None:
-        self.nodes.extend(nodes)
+    @property
+    def nodes(self):
+        return self._nodes
+
+    def __init__(self):
+        self._nodes = []
+
+    def add(self, value) -> None:
+        """Adds a node to the frontier.
+
+        Supports single or collective addition of nodes.
+        """
+
+        if isinstance(value, Node):
+            self._nodes.append(value)
+
+        elif isinstance(value, (list, tuple, set)):
+            self._nodes.extend(value)
+
+        else:
+            raise TypeError("Invalid type for node addition.")
 
     def is_empty(self) -> bool:
-        return len(self.nodes) == 0
+        """Determines whether the frontier is empty or not."""
+
+        return len(self._nodes) == 0
+
+    def __str__(self):
+        return f"Frontier({self._nodes})"
 
     def __repr__(self):
-        return f"{self.nodes}"
+        return str(self._nodes)
 
 
 class StackFrontier(Frontier):
-    """Frontier expansion that removes nodes via LIFO."""
+    """Frontier variant that allows node removal in a LIFO manner."""
 
-    def remove_node(self) -> None:
-        return self.nodes.pop()
+    def remove(self) -> None:
+        """Removes a node from the frontier."""
+
+        return self._nodes.pop()
 
 
 class QueueFrontier(Frontier):
-    """Frontier expansion that removes nodes via FIFO."""
+    """Frontier variant that allows node removal in a FIFO manner."""
 
-    def remove_node(self) -> None:
-        return self.nodes.pop(0)
+    def remove(self) -> None:
+        """Removes a node from the frontier."""
+
+        return self._nodes.pop(0)
