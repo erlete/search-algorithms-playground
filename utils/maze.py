@@ -34,9 +34,11 @@ class MazeBase:
         The dimensions of the maze. If an integer is passed, the maze will be
         square. If a tuple is passed, the first element will be the width and
         the second element will be the height.
-     - logger: bool
-        If True, the class will print information about the maze generation
     """
+
+    IMAGE_DIRECTORY = "image_cache"
+    IMAGE_PREFIX = "image"
+    IMAGE_FORMAT = "png"
 
     @property
     def width(self):
@@ -73,7 +75,7 @@ class MazeBase:
 
         self._width, self._height = self._dimensions  # Unpacks the tuple.
 
-    def __init__(self, dimensions, logger=False):
+    def __init__(self, dimensions):
         self.dimensions = dimensions
 
         # Maze generation process:
@@ -98,6 +100,8 @@ class MazeBase:
             "explored": 0,
             "total": self._width * self._height
         }
+
+        self._image_file = None
 
 
 class Search:
@@ -145,20 +149,14 @@ class Search:
         if self._is_explored:
             self._reset_explored_nodes()
 
-        timer = time()
         frontier = StackFrontier()
         frontier.add(self._start)
         self._is_explored, has_end = True, False
-
-        self._log("[DFS] Initial frontier:", frontier)
 
         while not frontier.is_empty() and not has_end:
             self._explored_nodes.append(node := frontier.remove())
             if node.state != -10:
                 node.set_state(2)
-
-            self._log("[DFS] Selected node:", node)
-            self._log(f"[DFS] Updated display:\n\n{self.ascii()}")
 
             neighbors = [
                 node for node in self._get_neighbors(node)
@@ -172,12 +170,9 @@ class Search:
                     self._explored_nodes.append(self._end)
                     has_end = True
 
-                    self._log("[DFS] Search time:", f"{(time() - timer):.5}s.")
                     break
 
             frontier.add(neighbors)
-
-            self._log("[DFS] Updated frontier:", frontier)
 
         self._count["explored"] = len(self._explored_nodes)
         self._set_node_color()
@@ -196,20 +191,14 @@ class Search:
         if self._is_explored:
             self._reset_explored_nodes()
 
-        timer = time()
         frontier = QueueFrontier()
         frontier.add(self._start)
         self._is_explored, has_end = True, False
-
-        self._log("[BFS] Initial frontier:", frontier)
 
         while not frontier.is_empty() and not has_end:
             self._explored_nodes.append(node := frontier.remove())
             if node.state != -10:
                 node.set_state(2)
-
-            self._log("[BFS] Selected node:", node)
-            self._log(f"[BFS] Updated display:\n\n{self.ascii()}")
 
             neighbors = [
                 node for node in self._get_neighbors(node)
@@ -222,13 +211,9 @@ class Search:
                 if neighbor.state == self._end.state:
                     self._explored_nodes.append(self._end)
                     has_end = True
-
-                    self._log("[BFS] Search time:", f"{(time() - timer):.5}s.")
                     break
 
             frontier.add(neighbors)
-
-            self._log("[BFS] Updated frontier:", frontier)
 
         self._count["explored"] = len(self._explored_nodes)
         self._set_node_color()
@@ -250,19 +235,13 @@ class Search:
         for node in self._node_list:
             node.weight = self.manhattan_distance(node, self._end)
 
-        timer = time()
         frontier = [self._start]
         self._is_explored, has_end = True, False
-
-        self._log("[GBFS] Initial frontier:", frontier)
 
         while len(frontier) >= 1 and not has_end:
             self._explored_nodes.append(node := frontier.pop())
             if node.state != -10:
                 node.set_state(2)
-
-            self._log("[GBFS] Selected node:", node)
-            self._log(f"[GBFS] Updated display:\n\n{self.ascii()}")
 
             neighbors = [
                 node for node in self._get_neighbors(node)
@@ -276,16 +255,10 @@ class Search:
                     self._explored_nodes.append(self._end)
                     has_end = True
 
-                    self._log("[GBFS] Search time:",
-                              f"{(time() - timer):.5f}s.")
                     break
-
-            self._log("[GBFS] Neighbors:", neighbors, indentation=1)
 
             frontier.extend(neighbors)
             frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
-
-            self._log("[GBFS] Updated frontier:", frontier)
 
         self._count["explored"] = len(self._explored_nodes)
         self._set_node_color()
@@ -307,19 +280,13 @@ class Search:
         for node in self._node_list:
             node.weight = self.radial_distance(node, self._end)
 
-        timer = time()
         frontier = [self._start]
         self._is_explored, has_end = True, False
-
-        self._log("[RS] Initial frontier:", frontier)
 
         while len(frontier) >= 1 and not has_end:
             self._explored_nodes.append(node := frontier.pop())
             if node.state != -10:
                 node.set_state(2)
-
-            self._log("[RS] Selected node:", node)
-            self._log(f"[RS] Updated display:\n\n{self.ascii()}")
 
             neighbors = [
                 node for node in self._get_neighbors(node)
@@ -333,15 +300,10 @@ class Search:
                     self._explored_nodes.append(self._end)
                     has_end = True
 
-                    self._log("[RS] Search time:", f"{(time() - timer):.5f}s.")
                     break
-
-            self._log("[RS] Neighbors:", neighbors, indentation=1)
 
             frontier.extend(neighbors)
             frontier = sorted(frontier, reverse=True, key=lambda x: x.weight)
-
-            self._log("[RS] Updated frontier:", frontier)
 
         self._count["explored"] = len(self._explored_nodes)
         self._set_node_color()
@@ -353,7 +315,7 @@ class Maze(MazeBase, Search):
     """Represents a maze object.
 
     Contains methods for maze generation and exploration, as well as methods
-    for exporting the maze to an image file and logging the process.
+    for exporting the maze to an image file.
 
     Parameters:
     -----------
@@ -361,69 +323,18 @@ class Maze(MazeBase, Search):
         The dimensions of the maze. If an integer is passed, the maze will be
         square. If a tuple is passed, the first element will be the width and
         the second element will be the height.
-     - logger: bool
-        If True, the class will print information about the maze generation
     """
 
-    def __init__(self, dimensions, logger=False):
+    def __init__(self, dimensions):
 
-        super().__init__(dimensions, logger)
-
-        # Logger settings:
-        self.logger = logger
-        self.LOG_DIRECTORY = "log_cache"
-        self.LOG_PREFIX = "log"
-        self.LOG_FORMAT = "txt"
-        self.LOG_FILE = f"./{self.LOG_DIRECTORY}/{self.LOG_PREFIX}_" +\
-            f"{''.join(str(time()).split('.'))}.{self.LOG_FORMAT}"
-        # Logs are dinamically modified, so its identifier must remain fixed
-        #	so that more contents can be appended to them.
+        super().__init__(dimensions)
 
         # Image settings:
-        self.IMAGE_DIRECTORY = "image_cache"
-        self.IMAGE_PREFIX = "image"
-        self.IMAGE_FORMAT = "png"
-        self.IMAGE_FILE = None
+
         # Images might be exported several times per object creation, hence
         #	the necessity of making their identifier variable (in 'Maze.image').
 
         self._generate_path()
-
-    @staticmethod
-    def _writer(file: str, argument, indentation: int, newlines: int):
-        """TODO: add docstring"""
-        header = f"+ {datetime.now().isoformat()} "
-        file.write(
-            header.ljust(len(header) + 4 * (indentation + 1), '-')
-            + f" {argument}" + newlines * '\n'
-        )
-
-    # TODO: refactor this method or remove it.
-    def _log(self, *arguments, indentation=0, expand=True) -> None:
-        """TODO: add docstring"""
-        if not self.logger:
-            return None
-
-        if not path.isdir(f"./{self.LOG_DIRECTORY}"):
-            mkdir(f"./{self.LOG_DIRECTORY}")
-
-        with open(self.LOG_FILE, mode='a', encoding="utf-8") as log_file:
-            if len(arguments) >= 1:
-                self._writer(log_file, arguments[0], indentation, 1)
-
-                if len(arguments) > 1:
-                    for argument in arguments[1:]:
-                        if isinstance(argument, (list, tuple, set)) and expand:
-                            for index, element in enumerate(argument):
-                                self._writer(
-                                    log_file, f"{index} :: {element}", indentation + 2, 1)
-                        else:
-                            self._writer(log_file, argument,
-                                         indentation + 1, 1)
-
-            log_file.write('\n')
-
-        return None
 
     def _set_node_color(self):
         """Automatically sets the color of all explored nodes.
@@ -502,20 +413,12 @@ class Maze(MazeBase, Search):
             (node.x - 1, node.y)   # Left
         )
 
-        self._log(
-            f"[NEXT_NODES] Next coordinates for node {node}:",
-            coordinates, indentation=1, expand=False
-        )
-
         nodes = [
             self._node_matrix[coord[1]][coord[0]] for coord in coordinates
             if 0 <= coord[0] < self._width and 0 <= coord[1] < self._height
         ]
 
         nodes = sample(nodes, len(nodes))
-
-        self._log(
-            f"[NEXT_NODES] Next nodes for node {node}:", nodes, indentation=2)
 
         return nodes
 
@@ -542,18 +445,10 @@ class Maze(MazeBase, Search):
             (node.x - 1, node.y)
         )
 
-        self._log(
-            f"[SURROUNDING NODES] Surrounding coordinates for node {node}:",
-            coordinates, indentation=1, expand=False
-        )
-
         nodes = [
             self._node_matrix[coord[1]][coord[0]] for coord in coordinates
             if 0 <= coord[0] < self._width and 0 <= coord[1] < self._height
         ]
-
-        self._log(
-            f"[SURROUNDING NODES] Surrounding nodes for node {node}: ", nodes, indentation=2)
 
         return nodes
 
@@ -580,15 +475,11 @@ class Maze(MazeBase, Search):
     def _randomize_divergence(self, nodes: list) -> list:
         """Randomizes the divergence during path generation process."""
 
-        self._log("[CAESAR] Unfiltered:", nodes, indentation=1)
-
         bias = round(max(self._width, self._height) * (1 / 4))
         chance = randint(bias if bias <= len(
             nodes) else len(nodes), len(nodes))
         nodes = sample(nodes, chance if 0 <= chance <=
                        len(nodes) else .66 * len(nodes))
-
-        self._log("[CAESAR] Filtered:", nodes, indentation=2)
 
         return nodes
 
@@ -607,8 +498,6 @@ class Maze(MazeBase, Search):
         if randint(0, 100) / 100 < probability:
             path_tiles = [node for node in self._node_list if node.state == 1]
 
-            self._log("[GOAL SPREADER] Elements:", path_tiles, indentation=1)
-
             self._end = path_tiles[0]
             top_distance = self.manhattan_distance(self._end, path_tiles[0])
 
@@ -619,8 +508,6 @@ class Maze(MazeBase, Search):
 
             self._end.set_state(10)
 
-            self._log("[GOAL SPREADER] Selected goal:",
-                      self._end, indentation=2)
 
     def _generate_path(self) -> None:
         """Generates a random path for the base array."""
@@ -628,11 +515,7 @@ class Maze(MazeBase, Search):
         if self._is_generated:
             self._reset_generated_nodes()
 
-        self._log("Start:", self._start)
-        timer = time()
         frontier = [self._start]
-
-        self._log("[PATH GENERATOR] Initial rontier:", frontier)
 
         while frontier:
             selected_nodes, candidates = [], []
@@ -643,8 +526,6 @@ class Maze(MazeBase, Search):
                      if neighbor.state not in (-10, 1)]
                 )
 
-            self._log("[PATH GENERATOR] Candidates:", candidates)
-
             selected_nodes = self._randomize_divergence([
                 candidate for candidate in candidates if len([
                     node for node in self._get_square_neighbors(candidate)
@@ -652,23 +533,14 @@ class Maze(MazeBase, Search):
                 ]) <= 2
             ])
 
-            # FIXME: this might be the cause of the lack of divergence.
             frontier = selected_nodes
             for node in frontier:
                 node.set_state(1)
                 self._count["path"] += 1
 
-            self._log("[PATH GENERATOR] Updated frontier:", frontier)
-            self._log(f"[PATH GENERATOR] Updated display:\n\n{self.ascii()}")
-
-        self._log("[PATH GENERATOR] Node map:", self._node_list)
-
         self._set_end_node()
         self._is_generated = True
 
-        self._log("[PATH GENERATOR] Generation time:",
-                  f"{(time() - timer):.5f}s.")
-        self._log(f"Display:\n{str(self)}", indentation=1)
 
     def ascii(self) -> str:
         """Returns an ASCII representation of the maze array.
@@ -676,15 +548,13 @@ class Maze(MazeBase, Search):
         Each node is represented by a character, given its state.
         """
 
-        return (f"╔═{2 * '═' * self._width}╗\n"
-                + ''.join(
-                    ''.join(
-                        ['║ ' + ''.join(
-                            [node.ascii for node in row]
-                        ) + '║\n']
-                    ) for row in self._node_matrix
-                ) + f"╚═{2 * '═' * self._width}╝"
-                )
+        return (f"╔═{2 * '═' * self._width}╗\n" + ''.join(
+            ''.join(
+                ['║ ' + ''.join(
+                    [node.ascii for node in row]
+                ) + '║\n']
+            ) for row in self._node_matrix
+        ) + f"╚═{2 * '═' * self._width}╝")
 
     def image(self, show_image=True, save_image=False) -> str:
         """Generates an image from the maze array with colored nodes.
@@ -701,14 +571,16 @@ class Maze(MazeBase, Search):
         cell, border = 50, 8
 
         image = Image.new(
-            mode="RGB", size=(self._width * cell, self._height * cell), color="black"
+            mode="RGB", size=(
+                self._width * cell, self._height * cell
+            ), color="black"
         )
 
         # Canvas modification:
         image_draw = ImageDraw.Draw(image)
 
-        for ri, row in enumerate(self._node_matrix):
-            for ci, node in enumerate(row):
+        for row_i, row in enumerate(self._node_matrix):
+            for col_i, node in enumerate(row):
                 if node.state in (-10, 3, 10):
                     if node.state == 3:
                         pre_border = border
@@ -725,21 +597,19 @@ class Maze(MazeBase, Search):
                             int(node.color[2] + 2 * node.color[2])
                         )
 
-                    image_draw.rectangle((
-                        (ci * cell + pre_border // 2, ri * cell + pre_border // 2),
-                        ((ci + 1) * cell - pre_border // 2,
-                         (ri + 1) * cell - pre_border // 2)
-                    ),
-                        fill=pattern_fill
-                    )
+                    image_draw.rectangle(((
+                        col_i * cell + pre_border // 2,
+                        row_i * cell + pre_border // 2
+                    ), (
+                        (col_i + 1) * cell - pre_border // 2,
+                        (row_i + 1) * cell - pre_border // 2
+                    )), fill=pattern_fill)
 
                 image_draw.rectangle((
-                    (ci * cell + border, ri * cell + border),
-                    ((ci + 1) * cell - border,
-                     (ri + 1) * cell - border)
-                ),
-                    fill=node.color
-                )
+                    (col_i * cell + border, row_i * cell + border),
+                    ((col_i + 1) * cell - border,
+                     (row_i + 1) * cell - border)
+                ), fill=node.color)
 
         # Image export:
         if show_image:
@@ -749,14 +619,14 @@ class Maze(MazeBase, Search):
             if not path.isdir(f"./{self.IMAGE_DIRECTORY}"):
                 mkdir(f"./{self.IMAGE_DIRECTORY}")
 
-            self.IMAGE_FILE = f"./{self.IMAGE_DIRECTORY}/{self.IMAGE_PREFIX}" \
+            self._image_file = f"./{self.IMAGE_DIRECTORY}/{self.IMAGE_PREFIX}" \
                 + f"_{''.join(str(time()).split('.'))}.{self.IMAGE_FORMAT}"
 
-            image.save(self.IMAGE_FILE)
+            image.save(self._image_file)
 
-            return self.IMAGE_FILE
+            return self._image_file  # Image file path.
 
-        return ''
+        return ''  # If no image is saved, no file path is returned.
 
     def __repr__(self):
         return f"<({self._width}x{self._height}) Maze instance>"
