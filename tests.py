@@ -139,7 +139,9 @@ def test_6(cycles=CONSTANTS["cycles"], logger=False):
     plt.show()
 
 
-if __name__ == "__main__":
+def main():
+    """Main function."""
+
     test_1()
     test_2()
     test_3()
