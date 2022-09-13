@@ -473,7 +473,6 @@ class Maze(MazeBase, Search):
         so the process stops when the start is reached.
         """
 
-        # FIXME: add end node existence check.
         if self._end in self._explored_nodes:
             self.optimal_path = [self._end]
             node = self._end.parent

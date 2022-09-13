@@ -1,147 +1,101 @@
 """Various tests for the 'main.py' file."""
 
 from utils.maze import Maze
-from time import time
+from time import perf_counter
 import matplotlib.pyplot as plt
 
 
-CONSTANTS = {
+CONFIG = {
     "dimensions": (20, 20),
     "cycles": 50,
-    "show_image": True,
-    "save_image": False
+    "verbose": True
 }
 
 
-def test_1(size=CONSTANTS["dimensions"]):
-    """Instance creation test with ASCII representation."""
+def log(message: str):
+    """Prints a message if the verbose option is enabled."""
 
-    print("\nTEST 1")
-
-    obj = Maze(size)
-    print(obj)
+    if CONFIG["verbose"]:
+        print(message)
 
 
-def test_2(size=CONSTANTS["dimensions"]):
-    """Path generation test with ASCII representation."""
+def generation_test():
+    """Ensures that the maze is correctly generated."""
 
-    print("\nTEST 2")
-
-    obj = Maze(size)
-    obj._generate_path()
-
-    print(obj.ascii())
+    log(" · Generation test started...")
+    cron_start = perf_counter()
+    Maze(CONFIG.get("dimensions"))
+    log(f" > Maze generated in {perf_counter() - cron_start:.4}s.\n")
 
 
-def test_3(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-           save_image=CONSTANTS["save_image"]):
-    """Path generation test with image representation."""
+def ascii_test():
+    """Ensures that the ASCII representation works correctly."""
 
-    print("\nTEST 3")
-
-    obj = Maze(size)
-    obj._generate_path()
-
-    obj.image()
+    log(" · ASCII test started...")
+    maze = Maze(CONFIG.get("dimensions"))
+    log(maze.ascii())
+    log(" > ASCII representation finished.\n")
 
 
-def test_4(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-           save_image=CONSTANTS["save_image"]):
-    """Path solving (DFS) with ASCII and image representation"""
+def image_show_test():
+    """Ensures that the image is correctly shown."""
 
-    print("\nTEST 4")
-
-    obj = Maze(size)
-    obj._generate_path()
-    obj.depth_first_search()
-
-    print(obj.ascii())
-    obj.image()
+    log(" · Image show test started...")
+    maze = Maze(CONFIG.get("dimensions"))
+    maze.image(True, False)
+    log(" > Image display finished.\n")
 
 
-def test_5(size=CONSTANTS["dimensions"], show_image=CONSTANTS["show_image"],
-           save_image=CONSTANTS["save_image"]):
-    """Path solving (GBFS) with ASCII and image representation"""
+def image_save_test():
+    """Ensures that the image is correctly saved."""
 
-    print("\nTEST 5")
-
-    obj = Maze(size)
-    obj._generate_path()
-    obj.greedy_best_first_search()
-
-    print(obj.ascii())
-    obj.image()
+    log(" · Image save test started...")
+    maze = Maze(CONFIG.get("dimensions"))
+    maze.image(False, True)
+    log(" > Image saving finished.\n")
 
 
-def test_6(cycles=CONSTANTS["cycles"]):
-    """Visual benchmarking utility (path generation vs search methods)."""
+def depth_first_search_test():
+    """Ensures that the depth-first search algorithm works correctly."""
 
-    x_axis = range(4, cycles)
-    y_axis_1, y_axis_2, y_axis_3 = [], [], []
-
-    for iteration in x_axis:
-        obj = Maze((iteration, iteration))
-
-        time_0 = time()
-        obj._generate_path()
-        time_1 = time()
-        obj.depth_first_search()
-        time_2 = time()
-        obj.greedy_best_first_search()
-        time_3 = time()
-
-        y_axis_1.append(time_1 - time_0)
-        y_axis_2.append(time_2 - time_1)
-        y_axis_3.append(time_3 - time_2)
-
-    plt.plot(x_axis, y_axis_1, color="black", label="Path generation")
-    plt.plot(x_axis, y_axis_2, color="orange", label="Depth-First Search")
-    plt.plot(x_axis, y_axis_3, color="red", label="Greedy Best-First Search")
-
-    plt.title("Elapsed times comparison")
-    plt.xlabel("Order of dimensions")
-    plt.ylabel("Time elapsed (s)")
-    plt.legend(loc="center left")
-
-    plt.show()
+    log(" · DFS test started...")
+    cron_start = perf_counter()
+    maze = Maze(CONFIG.get("dimensions"))
+    maze.depth_first_search()
+    log(f" > DFS finished in {perf_counter() - cron_start:.4}s.\n")
 
 
-def test_6(cycles=CONSTANTS["cycles"]):
-    """Visual benchmarking utility (search methods)."""
+def breadth_first_search_test():
+    """Ensures that the breadth-first search algorithm works correctly."""
 
-    x_axis = range(4, cycles)
-    y_axis_1, y_axis_2 = [], []
+    log(" · BFS test started...")
+    cron_start = perf_counter()
+    maze = Maze(CONFIG.get("dimensions"))
+    maze.breadth_first_search()
+    log(
+        f" > BFS finished in {perf_counter() - cron_start:.4}s.\n")
 
-    for iteration in x_axis:
-        obj = Maze((iteration, iteration))
-        obj._generate_path()
 
-        time_0 = time()
-        obj.depth_first_search()
-        time_1 = time()
-        obj.greedy_best_first_search()
-        time_2 = time()
+def greedy_best_first_search_test():
+    """Ensures that the greedy best-first search algorithm works correctly."""
 
-        y_axis_1.append(time_1 - time_0)
-        y_axis_2.append(time_2 - time_1)
-
-    plt.plot(x_axis, y_axis_1, color="orange", label="Depth-First Search")
-    plt.plot(x_axis, y_axis_2, color="red", label="Greedy Best-First Search")
-
-    plt.title("Elapsed times comparison")
-    plt.xlabel("Order of dimensions")
-    plt.ylabel("Time elapsed (s)")
-    plt.legend(loc="center left")
-
-    plt.show()
+    log(" · GBFS test started...")
+    cron_start = perf_counter()
+    maze = Maze(CONFIG.get("dimensions"))
+    maze.greedy_best_first_search()
+    log(
+        f" > GBFS finished in {perf_counter() - cron_start:.4}s.\n")
 
 
 def main():
     """Main function."""
 
-    test_1()
-    test_2()
-    test_3()
-    test_4()
-    test_5()
-    test_6()
+    log(" ·Tests started...")
+    generation_test()
+    ascii_test()
+    image_show_test()
+    image_save_test()
+    depth_first_search_test()
+    breadth_first_search_test()
+    greedy_best_first_search_test()
+    log(" > Tests finished.")
