@@ -72,8 +72,7 @@ def breadth_first_search_test():
     cron_start = perf_counter()
     maze = Maze(CONFIG.get("dimensions"))
     maze.breadth_first_search()
-    log(
-        f" > BFS finished in {perf_counter() - cron_start:.4}s.\n")
+    log(f" > BFS finished in {perf_counter() - cron_start:.4}s.\n")
 
 
 def greedy_best_first_search_test():
@@ -83,8 +82,7 @@ def greedy_best_first_search_test():
     cron_start = perf_counter()
     maze = Maze(CONFIG.get("dimensions"))
     maze.greedy_best_first_search()
-    log(
-        f" > GBFS finished in {perf_counter() - cron_start:.4}s.\n")
+    log(f" > GBFS finished in {perf_counter() - cron_start:.4}s.\n")
 
 
 def main():

@@ -85,17 +85,15 @@ class MazeBase:
             [Node(column, row) for column in range(self._width)]
             for row in range(self._height)
         ]
-
         self._node_list = [node for row in self._node_matrix for node in row]
 
+        # Start node setting:
         self._start = self._node_matrix[
             randrange(0, self._height)
         ][randrange(0, self._width)]
-        self._end = Node(0, 0)  # TODO: check if this is necessary.
-
-        # TODO: maybe add a _set_endpoints() method?
         self._start.set_state(-10)
 
+        # Maze statistics setting:
         self._explored_nodes, self.optimal_path = [], []
         self._is_generated = self._is_explored = False
         self._count = {
