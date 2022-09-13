@@ -433,7 +433,6 @@ class Maze(MazeBase, Search):
 
         return sample(nodes, len(nodes))
 
-
     def _get_square_neighbors(self, node: Node) -> list:
         """Returns square neighbors of a node.
 
@@ -568,12 +567,9 @@ class Maze(MazeBase, Search):
         Each node is represented by a character, given its state.
         """
 
-        # TODO: maybe refactor this monstruosity?
         return (f"╔═{2 * '═' * self._width}╗\n" + ''.join(
             ''.join(
-                ['║ ' + ''.join(
-                    [node.ascii for node in row]
-                ) + '║\n']
+                ['║ ' + ''.join([node.ascii for node in row]) + '║\n']
             ) for row in self._node_matrix
         ) + f"╚═{2 * '═' * self._width}╝")
 
