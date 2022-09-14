@@ -1,5 +1,5 @@
 """Base module for search algorithms testing."""
 
-from tests import main
+from tests.internal import main
 
 main()

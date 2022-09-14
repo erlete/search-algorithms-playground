@@ -85,9 +85,7 @@ def greedy_best_first_search_test():
     log(f" > GBFS finished in {perf_counter() - cron_start:.4}s.\n")
 
 
-def main():
-    """Main function."""
-
+if __name__ == "__main__":
     log(" ·Tests started...")
     generation_test()
     ascii_test()
