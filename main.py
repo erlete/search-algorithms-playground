@@ -24,6 +24,14 @@ INDEX_OFFSET = 1
 
 MENU = InterfaceMenu()
 MENU.add_item(
+    MenuItem("Generate maze", MENU.generate_maze),
+    MenuItem("Depth-first search", MENU.df_search),
+    MenuItem("Breadth-first search", MENU.bf_search),
+    MenuItem("Greedy best-first search", MENU.gbf_search),
+    MenuItem("Radial search", MENU.r_search),
+    MenuItem("Display ASCII", MENU.display_ascii),
+    MenuItem("Display image", MENU.display_image),
+    MenuItem("Save image", MENU.save_image),
     MenuItem("Exit interface")
 )
 
