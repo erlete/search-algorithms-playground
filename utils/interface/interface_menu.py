@@ -1,9 +1,11 @@
-"""Container for the InterfaceMenu class, specifically designed for the
-interface used on the Archive project.
+"""Container for the InterfaceMenu class.
+
+The InterfaceMenu class is intended to be a plug-in to the Menu class that
+contains repository-specific methods for the menu interface.
 
 Author:
-------
-Paulo Sanchez (dev.szblzpaulo@gmail.com)
+-------
+ - Paulo Sanchez (@erlete)
 """
 
 
@@ -13,12 +15,18 @@ from utils.interface.menu import Menu
 from utils.internal.maze import Maze
 
 
+# Auxiliary methods:
+
+
 def inputn(text: str) -> None:
     """Generates a data input prompt and prints a newline after it."""
 
     input_data = input(text)
     print()
     return input_data
+
+
+# Module classes:
 
 
 class InterfaceMenu(Menu):

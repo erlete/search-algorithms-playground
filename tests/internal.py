@@ -1,8 +1,21 @@
-"""Various tests for the 'main.py' file."""
+"""Internal tests module.
 
-from utils.internal.maze import Maze
+This module contains several tests that ensure that the basic maze operations
+are working correctly.
+
+Author:
+-------
+ - Paulo Sanchez (@erlete)
+"""
+
+
 from time import perf_counter
+
 import matplotlib.pyplot as plt
+from utils.internal.maze import Maze
+
+
+# Configuration constants:
 
 
 CONFIG = {
@@ -12,11 +25,17 @@ CONFIG = {
 }
 
 
+# Auxiliary methods:
+
+
 def log(message: str):
     """Prints a message if the verbose option is enabled."""
 
     if CONFIG["verbose"]:
         print(message)
+
+
+# Test methods:
 
 
 def generation_test():
@@ -85,8 +104,11 @@ def greedy_best_first_search_test():
     log(f" > GBFS finished in {perf_counter() - cron_start:.4}s.\n")
 
 
+# Main execution:
+
+
 def main():
-    """Main function for tests."""
+    """Main executable function."""
 
     log(" ·Tests started...")
     generation_test()

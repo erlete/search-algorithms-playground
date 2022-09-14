@@ -5,8 +5,8 @@ methods that allow menu entry addition, removal or even statement execution
 linked to a specific option.
 
 Author:
-------
-Paulo Sanchez (dev.szblzpaulo@gmail.com)
+-------
+ - Paulo Sanchez (@erlete)
 """
 
 
@@ -14,18 +14,18 @@ class MenuItem:
     """Represents an item of a Menu.
 
     Parameters:
-    ----------
-    title : str
+    -----------
+     - title : str
         The title of the menu item, which will be displayed when the MenuItem
         object is called.
-    callback_function : callable_function_or_method
+     - callback_function : callable_function_or_method
         The method that will be called when the MenuItem is selected from the
         menu.
 
     Note:
-    ----
-        This class implements getter and setter methods for both title and
-        callback function of its instances.
+    -----
+    This class implements getter and setter methods for both title and
+    callback function of its instances.
     """
 
     def __init__(self, title: str, callback_function=None,
@@ -94,12 +94,13 @@ class Menu:
     representation.
 
     Note:
-    ----
-        Once instantiated, the add_item method must be used to add items
-        to the menu.
+    -----
+    Once instantiated, the add_item method must be used to add items
+    to the menu.
     """
 
     # Fine printing settings:
+
     FILLER = '–'
     CORNER = 'ø'
 

@@ -1,4 +1,4 @@
-"""Container module for the maze classes.
+"""Container module for the Maze classes.
 
 This module contains two classes: one of them is a generic Maze interface that
 contains basic attributes and methods, while the other is a specific maze
@@ -7,17 +7,15 @@ that allow path generation and searching.
 
 Author:
 -------
- - Paulo Sánchez (@erlete)
+ - Paulo Sanchez (@erlete)
 """
 
 
-from datetime import datetime
 from os import mkdir, path
 from random import randint, randrange, sample
 from time import time
 
 from PIL import Image, ImageDraw
-
 from utils.internal.frontier import QueueFrontier, StackFrontier
 from utils.internal.node import Node
 

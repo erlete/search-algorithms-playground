@@ -1,11 +1,11 @@
-"""Container module for the node class.
+"""Container module for the Node class.
 
 This module contains the class structure that allows node identification and
 state management.
 
 Author:
 -------
- - Paulo Sánchez (@erlete)
+ - Paulo Sanchez (@erlete)
 """
 
 

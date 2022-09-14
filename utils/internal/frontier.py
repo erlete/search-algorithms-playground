@@ -1,11 +1,11 @@
-"""Container module for the frontier classes.
+"""Container module for the Frontier classes.
 
 This module contains three classes: one of them is a generic Frontier
 interface and the others are specific to a stack or queue data structure.
 
 Author:
 -------
- - Paulo Sánchez (@erlete)
+ - Paulo Sanchez (@erlete)
 """
 
 

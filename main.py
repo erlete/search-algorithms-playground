@@ -5,7 +5,7 @@ command line interface. It provides functions to generate a maze, search
 it and display the results in several ways.
 
 Author:
-------
+-------
  - Paulo Sánchez (@erlete)
 """
 
@@ -18,9 +18,12 @@ from utils.interface.menu import MenuItem
 
 # Configuration constants:
 
+
 INDEX_OFFSET = 1
 
+
 # Object instantiation:
+
 
 MENU = InterfaceMenu()
 MENU.add_item(
@@ -35,7 +38,9 @@ MENU.add_item(
     MenuItem("Exit interface")
 )
 
+
 # Mainloop:
+
 
 active = True
 
