@@ -18,8 +18,8 @@ from time import time
 
 from PIL import Image, ImageDraw
 
-from utils.frontier import QueueFrontier, StackFrontier
-from utils.node import Node
+from utils.internal.frontier import QueueFrontier, StackFrontier
+from utils.internal.node import Node
 
 
 class MazeBase:
