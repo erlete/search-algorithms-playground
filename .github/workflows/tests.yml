@@ -1,4 +1,4 @@
-name: basic-tests
+name: repository-tests
 
 on:
   push:
@@ -26,4 +26,4 @@ jobs:
           path: "requirements.txt"
       - name: Run internal tests
         run: |
-          python ./tests/internal.py
+          python tests.py
