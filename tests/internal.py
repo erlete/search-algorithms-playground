@@ -1,6 +1,6 @@
 """Various tests for the 'main.py' file."""
 
-from utils.maze import Maze
+from utils.internal.maze import Maze
 from time import perf_counter
 import matplotlib.pyplot as plt
 
