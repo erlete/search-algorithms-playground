@@ -26,4 +26,4 @@ jobs:
           path: "requirements.txt"
       - name: Run internal tests
         run: |
-          python tests.py
+          python test.py
