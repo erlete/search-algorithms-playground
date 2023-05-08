@@ -4,9 +4,8 @@ This module allows the user to interact with the program through a simple
 command line interface. It provides functions to generate a maze, search
 it and display the results in several ways.
 
-Author:
--------
- - Paulo Sánchez (@erlete)
+Authors:
+    Paulo Sanchez (@erlete)
 """
 
 
@@ -15,16 +14,10 @@ import os
 from src.interface.interface_menu import InterfaceMenu
 from src.interface.menu import MenuItem
 
-
 # Configuration constants:
-
-
 INDEX_OFFSET = 1
 
-
 # Object instantiation:
-
-
 MENU = InterfaceMenu()
 MENU.add_item(
     MenuItem("Generate maze", MENU.generate_maze),
@@ -38,12 +31,8 @@ MENU.add_item(
     MenuItem("Exit interface")
 )
 
-
 # Mainloop:
-
-
 active = True
-
 while active:
     os.system("clear")
     MENU.display(index_offset=INDEX_OFFSET)
@@ -54,11 +43,11 @@ while active:
 
         # Non-digit entry check:
         if option.isdigit():
-            option = int(option)
+            option_int = int(option)
 
             # Out of bounds entry check:
-            if INDEX_OFFSET <= option <= len(MENU):
-                item = MENU.get_by_index(option - INDEX_OFFSET)
+            if INDEX_OFFSET <= option_int <= len(MENU):
+                item = MENU.get_by_index(option_int - INDEX_OFFSET)
                 os.system("clear")
                 print(f" Executing \"{item}\" ".center(90, '–') + '\n')
 
