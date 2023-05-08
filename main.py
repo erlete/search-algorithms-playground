@@ -12,8 +12,8 @@ Author:
 
 import os
 
-from utils.interface.interface_menu import InterfaceMenu
-from utils.interface.menu import MenuItem
+from src.interface.interface_menu import InterfaceMenu
+from src.interface.menu import MenuItem
 
 
 # Configuration constants:

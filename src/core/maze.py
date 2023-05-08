@@ -16,8 +16,8 @@ from random import randint, randrange, sample
 from time import time
 
 from PIL import Image, ImageDraw
-from utils.internal.frontier import QueueFrontier, StackFrontier
-from utils.internal.node import Node
+from .frontier import QueueFrontier, StackFrontier
+from .node import Node
 
 
 class MazeBase:

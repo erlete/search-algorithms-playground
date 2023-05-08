@@ -8,14 +8,10 @@ Author:
  - Paulo Sanchez (@erlete)
 """
 
-
 from time import perf_counter
 
-from utils.interface.menu import Menu
-from utils.internal.maze import Maze
-
-
-# Auxiliary methods:
+from .menu import Menu
+from ..core.maze import Maze
 
 
 def inputn(text: str) -> None:

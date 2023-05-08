@@ -9,7 +9,7 @@ Author:
 """
 
 
-from utils.internal.node import Node
+from .node import Node
 
 
 class Frontier:
