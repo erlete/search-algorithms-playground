@@ -353,11 +353,11 @@ class Maze(MazeBase, Search):
         # Apply the color to each explored node:
         for index, node in enumerate(self._explored_nodes):
             if node.state not in (self._start.state, self._end.state):
-                node.set_color((
+                node.color = (
                     int(self._start.color[0] + differential[0] * index),
                     int(self._start.color[1] + differential[1] * index),
                     int(self._start.color[2] + differential[2] * index)
-                ))
+                )
 
     def _reset_explored_nodes(self) -> None:
         """Converts all explored nodes back to unexplored nodes.
